@@ -1,0 +1,22 @@
+# Java / Maven
+target/
+**/target/
+*.class
+
+# React / Node
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+application-local.yml
+
+# IDE and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

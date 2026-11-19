@@ -1,0 +1,57 @@
+﻿# Suscripciones
+
+Aplicación self-hosted para registrar suscripciones y consultar cuánto cuestan, cuándo se cobran y cómo se reparte el gasto.
+
+## Primera versión
+
+- Crear, consultar, editar y archivar suscripciones.
+- Guardar nombre, importe, moneda, categoría, frecuencia, próximo cobro y estado.
+- Mostrar gasto mensual y anual estimado.
+- Mostrar próximos cobros ordenados por fecha.
+- Mostrar gasto agrupado por categoría.
+
+## Arquitectura acordada
+
+- **Backend:** Spring Boot, API REST y lógica de negocio.
+- **Frontend:** React con TypeScript; se compila y Spring Boot sirve los archivos estáticos.
+- **Base de datos:** PostgreSQL en un contenedor separado.
+- **Ejecución local:** Docker Compose para levantar la app y PostgreSQL.
+- **Distribución:** una imagen Docker para la aplicación (backend + frontend compilado).
+
+## Ruta de aprendizaje
+
+1. Acordar el alcance y el modelo de una suscripción.
+2. Crear la estructura del proyecto y levantar una primera API.
+3. Persistir suscripciones en PostgreSQL con migraciones.
+4. Añadir cálculos y endpoints para resúmenes y próximos cobros.
+5. Construir la interfaz React/TypeScript.
+6. Probar la persistencia con Testcontainers.
+7. Crear la imagen Docker de la app y configurar Docker Compose.
+
+En cada etapa explicaremos las decisiones y el código antes de avanzar a la siguiente.
+
+## Desarrollo local
+
+La API inicial vive en `backend/`. Requiere Java 25 y Maven.
+
+```powershell
+cd backend
+mvn spring-boot:run
+```
+
+Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"status":"ok"}`.
+
+## Modelo inicial de suscripción
+
+Cada suscripción tendrá:
+
+- `id`: identificador único.
+- `name`: nombre del servicio.
+- `amount`: importe por cobro, guardado con precisión decimal.
+- `currency`: código de moneda (por ejemplo, EUR).
+- `billingPeriod`: mensual o anual en la primera versión.
+- `category`: categoría elegida por el usuario.
+- `nextChargeDate`: fecha del próximo cobro.
+- `active`: indica si sigue activa.
+
+Los totales mensuales y anuales serán estimaciones normalizadas: una suscripción mensual cuenta 12 veces al año; una anual cuenta una vez al año y su equivalente mensual será el importe anual dividido entre 12. La primera versión asumirá una sola moneda por instalación para que los totales no mezclen monedas incompatibles.
