@@ -45,6 +45,10 @@ Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"st
 
 PostgreSQL conserva sus datos en el volumen Docker `postgres_data`. Las credenciales de `.env` son solo para desarrollo local; `.env` está excluido de Git.
 
+## Persistencia
+
+`Subscription` es el modelo de negocio. `SubscriptionEntity` lo traduce a la tabla SQL `subscriptions`, y `SubscriptionRepository` hereda de Spring Data JPA las operaciones habituales de lectura y escritura. Flyway aplica los cambios de esquema desde `backend/src/main/resources/db/migration`.
+
 ## Modelo inicial de suscripción
 
 Cada suscripción tendrá:
