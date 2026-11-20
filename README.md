@@ -42,6 +42,7 @@ mvn spring-boot:run
 ```
 
 Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"status":"ok"}`.
+`GET http://localhost:8080/api/subscriptions` devuelve las suscripciones ordenadas por próximo cobro; al principio devuelve `[]`.
 
 PostgreSQL conserva sus datos en el volumen Docker `postgres_data`. Las credenciales de `.env` son solo para desarrollo local; `.env` está excluido de Git.
 
