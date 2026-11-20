@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,21 +40,41 @@ public class SubscriptionController {
 
     @GetMapping("/{id}")
     public SubscriptionResponse getSubscription(@PathVariable UUID id) {
-        return subscriptionRepository.findById(id)
-                .map(entity -> SubscriptionResponse.from(entity.toDomain()))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
+        return SubscriptionResponse.from(findEntity(id).toDomain());
     }
 
     @PostMapping
     public ResponseEntity<SubscriptionResponse> createSubscription(
-            @Valid @RequestBody CreateSubscriptionRequest request
+            @Valid @RequestBody SubscriptionWriteRequest request
     ) {
         var created = subscriptionRepository.save(
-                new SubscriptionEntity(request.toDomain())
+                new SubscriptionEntity(request.toDomain(UUID.randomUUID(), true))
         ).toDomain();
 
         return ResponseEntity
                 .created(URI.create("/api/subscriptions/" + created.id()))
                 .body(SubscriptionResponse.from(created));
+    }
+
+    @PutMapping("/{id}")
+    public SubscriptionResponse updateSubscription(
+            @PathVariable UUID id,
+            @Valid @RequestBody SubscriptionWriteRequest request
+    ) {
+        var entity = findEntity(id);
+        entity.updateFrom(request.toDomain(id, entity.toDomain().active()));
+        return SubscriptionResponse.from(subscriptionRepository.save(entity).toDomain());
+    }
+
+    @PatchMapping("/{id}/archive")
+    public SubscriptionResponse archiveSubscription(@PathVariable UUID id) {
+        var entity = findEntity(id);
+        entity.archive();
+        return SubscriptionResponse.from(subscriptionRepository.save(entity).toDomain());
+    }
+
+    private SubscriptionEntity findEntity(UUID id) {
+        return subscriptionRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
     }
 }

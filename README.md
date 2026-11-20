@@ -44,6 +44,7 @@ mvn spring-boot:run
 Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"status":"ok"}`.
 `GET http://localhost:8080/api/subscriptions` devuelve las suscripciones ordenadas por próximo cobro; al principio devuelve `[]`.
 `POST http://localhost:8080/api/subscriptions` crea una suscripción; `GET /api/subscriptions/{id}` consulta una por su identificador.
+`PUT /api/subscriptions/{id}` actualiza sus datos y `PATCH /api/subscriptions/{id}/archive` la archiva sin eliminarla.
 
 Ejemplo de petición para crear una suscripción desde PowerShell:
 

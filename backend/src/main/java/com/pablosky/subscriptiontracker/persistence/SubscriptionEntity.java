@@ -61,4 +61,17 @@ public class SubscriptionEntity {
     public Subscription toDomain() {
         return new Subscription(id, name, amount, currency, billingPeriod, category, nextChargeDate, active);
     }
+
+    public void updateFrom(Subscription subscription) {
+        this.name = subscription.name();
+        this.amount = subscription.amount();
+        this.currency = subscription.currency();
+        this.billingPeriod = subscription.billingPeriod();
+        this.category = subscription.category();
+        this.nextChargeDate = subscription.nextChargeDate();
+    }
+
+    public void archive() {
+        this.active = false;
+    }
 }

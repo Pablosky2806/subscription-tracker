@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-public record CreateSubscriptionRequest(
+public record SubscriptionWriteRequest(
         @NotBlank @Size(max = 120) String name,
         @NotNull @Positive @Digits(integer = 10, fraction = 2) BigDecimal amount,
         @NotBlank @Pattern(regexp = "^[A-Z]{3}$") String currency,
@@ -22,16 +22,16 @@ public record CreateSubscriptionRequest(
         @NotNull LocalDate nextChargeDate
 ) {
 
-    public Subscription toDomain() {
+    public Subscription toDomain(UUID id, boolean active) {
         return new Subscription(
-                UUID.randomUUID(),
+                id,
                 name.trim(),
                 amount,
                 currency,
                 billingPeriod,
                 category.trim(),
                 nextChargeDate,
-                true
+                active
         );
     }
 }
