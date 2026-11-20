@@ -87,10 +87,10 @@ mvn test
 
 Si Docker no está disponible, Testcontainers omite este test; en ese caso, revisa que Docker Desktop esté iniciado y vuelve a ejecutar el comando.
 
-Las reglas del modelo se prueban sin Docker en `SubscriptionTest`. Para ejecutar solo esas pruebas desde `backend/`:
+Las reglas del modelo y los cálculos del resumen se prueban sin Docker en `SubscriptionTest` y `SubscriptionSummaryServiceTest`. Este último usa un repositorio simulado para comprobar que un cobro mensual se multiplica por 12, uno anual se divide entre 12 para el equivalente mensual, y ambos se agrupan por categoría. Para ejecutar solo esas pruebas desde `backend/`:
 
 ```powershell
-mvn "-Dtest=SubscriptionTest" test
+mvn "-Dtest=SubscriptionTest,SubscriptionSummaryServiceTest" test
 ```
 
 ## Persistencia
