@@ -77,6 +77,16 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/subscriptions" -Method Post -C
 
 PostgreSQL conserva sus datos en el volumen Docker `postgres_data`. Las credenciales de `.env` son solo para desarrollo local; `.env` está excluido de Git.
 
+## Pruebas de persistencia
+
+El test `SubscriptionRepositoryTest` inicia una instancia temporal de PostgreSQL con Testcontainers, aplica la migración de Flyway y comprueba que JPA guarda y recupera una suscripción. No usa ni modifica la base de datos de desarrollo. Para ejecutarlo, inicia Docker Desktop y ejecuta desde `backend/`:
+
+```powershell
+mvn test
+```
+
+Si Docker no está disponible, Testcontainers omite este test; en ese caso, revisa que Docker Desktop esté iniciado y vuelve a ejecutar el comando.
+
 ## Persistencia
 
 `Subscription` es el modelo de negocio. `SubscriptionEntity` lo traduce a la tabla SQL `subscriptions`, y `SubscriptionRepository` hereda de Spring Data JPA las operaciones habituales de lectura y escritura. Flyway aplica los cambios de esquema desde `backend/src/main/resources/db/migration`.
