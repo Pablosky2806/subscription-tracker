@@ -32,14 +32,18 @@ En cada etapa explicaremos las decisiones y el código antes de avanzar a la sig
 
 ## Desarrollo local
 
-La API inicial vive en `backend/`. Requiere Java 25 y Maven.
+La API vive en `backend/`. Requiere Java 25, Maven y Docker Desktop con el motor iniciado.
 
 ```powershell
+Copy-Item .env.example .env
+docker compose up -d postgres
 cd backend
 mvn spring-boot:run
 ```
 
 Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"status":"ok"}`.
+
+PostgreSQL conserva sus datos en el volumen Docker `postgres_data`. Las credenciales de `.env` son solo para desarrollo local; `.env` está excluido de Git.
 
 ## Modelo inicial de suscripción
 
