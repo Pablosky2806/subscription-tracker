@@ -87,7 +87,7 @@ mvn test
 
 Si Docker no está disponible, Testcontainers omite este test; en ese caso, revisa que Docker Desktop esté iniciado y vuelve a ejecutar el comando.
 
-Las reglas del modelo, los cálculos del resumen y los próximos cobros se prueban sin Docker en `SubscriptionTest`, `SubscriptionSummaryServiceTest`, `UpcomingChargeServiceTest` y `UpcomingChargeControllerTest`. Los tests de servicios usan un repositorio simulado; el test del controlador comprueba que la API acepta entre 1 y 365 días y rechaza los valores exteriores. Para ejecutar solo las pruebas que no necesitan Docker desde `backend/`:
+Las reglas del modelo, los cálculos del resumen y los próximos cobros se prueban sin Docker en `SubscriptionTest`, `SubscriptionSummaryServiceTest`, `UpcomingChargeServiceTest` y `UpcomingChargeControllerTest`. El resumen verifica la normalización mensual/anual y mantiene separadas las monedas; los tests de servicios usan un repositorio simulado. El test del controlador comprueba que la API acepta entre 1 y 365 días y rechaza los valores exteriores. Para ejecutar solo las pruebas que no necesitan Docker desde `backend/`:
 
 ```powershell
 mvn "-Dtest=SubscriptionTest,SubscriptionSummaryServiceTest,UpcomingChargeServiceTest,UpcomingChargeControllerTest" test

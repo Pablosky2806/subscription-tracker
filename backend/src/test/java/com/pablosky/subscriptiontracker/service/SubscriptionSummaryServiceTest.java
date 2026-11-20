@@ -49,6 +49,32 @@ class SubscriptionSummaryServiceTest {
         assertThat(eur.categories().getFirst().annualTotal()).isEqualByComparingTo("239.88");
     }
 
+    @Test
+    void keepsDifferentCurrenciesInSeparateTotals() {
+        var euroSubscription = subscription("Music service", "9.99", BillingPeriod.MONTHLY);
+        var dollarSubscription = new Subscription(
+                UUID.randomUUID(),
+                "Cloud storage",
+                new BigDecimal("5.00"),
+                "USD",
+                BillingPeriod.MONTHLY,
+                "Work",
+                LocalDate.of(2026, 12, 20),
+                true
+        );
+        given(subscriptionRepository.findByActiveTrue()).willReturn(List.of(
+                new SubscriptionEntity(dollarSubscription),
+                new SubscriptionEntity(euroSubscription)
+        ));
+
+        var currencies = summaryService.getSummary().currencies();
+
+        assertThat(currencies).hasSize(2);
+        assertThat(currencies).extracting(currency -> currency.currency()).containsExactly("EUR", "USD");
+        assertThat(currencies.get(0).monthlyTotal()).isEqualByComparingTo("9.99");
+        assertThat(currencies.get(1).monthlyTotal()).isEqualByComparingTo("5.00");
+    }
+
     private static Subscription subscription(String name, String amount, BillingPeriod billingPeriod) {
         return new Subscription(
                 UUID.randomUUID(),
