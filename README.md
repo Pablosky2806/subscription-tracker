@@ -87,6 +87,12 @@ mvn test
 
 Si Docker no está disponible, Testcontainers omite este test; en ese caso, revisa que Docker Desktop esté iniciado y vuelve a ejecutar el comando.
 
+Las reglas del modelo se prueban sin Docker en `SubscriptionTest`. Para ejecutar solo esas pruebas desde `backend/`:
+
+```powershell
+mvn "-Dtest=SubscriptionTest" test
+```
+
 ## Persistencia
 
 `Subscription` es el modelo de negocio. `SubscriptionEntity` lo traduce a la tabla SQL `subscriptions`, y `SubscriptionRepository` hereda de Spring Data JPA las operaciones habituales de lectura y escritura. Flyway aplica los cambios de esquema desde `backend/src/main/resources/db/migration`.
