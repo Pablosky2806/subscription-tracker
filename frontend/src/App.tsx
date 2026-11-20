@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { archiveSubscription, createSubscription, getDashboardData, updateSubscription } from './api'
+import { archiveSubscription, createSubscription, getDashboardData, restoreSubscription, updateSubscription } from './api'
 import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
 import SubscriptionForm from './SubscriptionForm'
 import './App.css'
@@ -126,11 +126,13 @@ function SubscriptionList({
   subscriptions,
   onEdit,
   onArchive,
+  onRestore,
   busyId,
 }: {
   subscriptions: Subscription[]
   onEdit: (subscription: Subscription) => void
   onArchive: (subscription: Subscription) => void
+  onRestore: (subscription: Subscription) => void
   busyId: string | null
 }) {
   if (subscriptions.length === 0) {
@@ -176,6 +178,18 @@ function SubscriptionList({
                 onClick={() => onArchive(subscription)}
               >
                 ↓
+              </button>
+            )}
+            {!subscription.active && (
+              <button
+                className="row-action-button restore-action"
+                type="button"
+                aria-label={`Restaurar ${subscription.name}`}
+                title="Restaurar"
+                disabled={busyId === subscription.id}
+                onClick={() => onRestore(subscription)}
+              >
+                ↥
               </button>
             )}
           </div>
@@ -243,6 +257,26 @@ function App() {
       }
     } catch (archiveError: unknown) {
       setError(archiveError instanceof Error ? archiveError.message : 'No se pudo archivar la suscripción.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function handleRestore(subscription: Subscription) {
+    setBusyId(subscription.id)
+    setError(null)
+    setNotice(null)
+
+    try {
+      const restored = await restoreSubscription(subscription.id)
+      setNotice(`${restored.name} se ha restaurado y volverá a contar en los gastos.`)
+      try {
+        await refreshDashboard()
+      } catch {
+        setError('Se restauró, pero no se pudo actualizar el panel. Recarga la página.')
+      }
+    } catch (restoreError: unknown) {
+      setError(restoreError instanceof Error ? restoreError.message : 'No se pudo restaurar la suscripción.')
     } finally {
       setBusyId(null)
     }
@@ -384,6 +418,7 @@ function App() {
                 setFormOpen(true)
               }}
               onArchive={handleArchive}
+              onRestore={handleRestore}
               busyId={busyId}
             />
           )}

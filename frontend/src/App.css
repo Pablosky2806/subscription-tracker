@@ -69,6 +69,8 @@
 .row-action-button:hover:not(:disabled) { border-color: #cbdccf; color: #355b45; background: #f3f8f3; }
 .row-action-button.archive-action { color: #916b4d; }
 .row-action-button.archive-action:hover:not(:disabled) { border-color: #ead9c7; color: #8a5630; background: #fff8ef; }
+.row-action-button.restore-action { color: #4f7959; }
+.row-action-button.restore-action:hover:not(:disabled) { border-color: #cfe2d1; color: #356446; background: #f1f8f1; }
 .row-action-button:disabled { opacity: .45; cursor: wait; }
 .is-archived { opacity: .58; }
 .loading-message { margin: 22px 0; color: #98a39b; font-size: 12px; }

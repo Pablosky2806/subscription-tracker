@@ -54,7 +54,7 @@ Vite sirve la interfaz en `http://localhost:5173` y reenvía las peticiones `/ap
 Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"status":"ok"}`.
 `GET http://localhost:8080/api/subscriptions` devuelve las suscripciones ordenadas por próximo cobro; al principio devuelve `[]`.
 `POST http://localhost:8080/api/subscriptions` crea una suscripción; `GET /api/subscriptions/{id}` consulta una por su identificador.
-`PUT /api/subscriptions/{id}` actualiza sus datos y `PATCH /api/subscriptions/{id}/archive` la archiva sin eliminarla.
+`PUT /api/subscriptions/{id}` actualiza sus datos, `PATCH /api/subscriptions/{id}/archive` la archiva sin eliminarla y `PATCH /api/subscriptions/{id}/restore` la restaura.
 `GET http://localhost:8080/api/summary` devuelve los totales mensuales y anuales estimados, agrupados por moneda y categoría; solo cuenta suscripciones activas.
 `GET http://localhost:8080/api/subscriptions/upcoming` devuelve los próximos cobros de 30 días; `?days=90` amplía la ventana hasta 90 días.
 

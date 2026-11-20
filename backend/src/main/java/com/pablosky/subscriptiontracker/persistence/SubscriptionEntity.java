@@ -74,4 +74,8 @@ public class SubscriptionEntity {
     public void archive() {
         this.active = false;
     }
+
+    public void restore() {
+        this.active = true;
+    }
 }

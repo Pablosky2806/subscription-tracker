@@ -57,3 +57,17 @@ export async function archiveSubscription(id: string): Promise<Subscription> {
 
   return response.json() as Promise<Subscription>
 }
+
+export async function restoreSubscription(id: string): Promise<Subscription> {
+  const response = await fetch(`/api/subscriptions/${encodeURIComponent(id)}/restore`, {
+    method: 'PATCH',
+    headers: { Accept: 'application/json' },
+  })
+
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo restaurar (HTTP ${response.status}).`)
+  }
+
+  return response.json() as Promise<Subscription>
+}

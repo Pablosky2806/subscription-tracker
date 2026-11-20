@@ -73,6 +73,13 @@ public class SubscriptionController {
         return SubscriptionResponse.from(subscriptionRepository.save(entity).toDomain());
     }
 
+    @PatchMapping("/{id}/restore")
+    public SubscriptionResponse restoreSubscription(@PathVariable UUID id) {
+        var entity = findEntity(id);
+        entity.restore();
+        return SubscriptionResponse.from(subscriptionRepository.save(entity).toDomain());
+    }
+
     private SubscriptionEntity findEntity(UUID id) {
         return subscriptionRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subscription not found"));
