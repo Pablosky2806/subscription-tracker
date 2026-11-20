@@ -41,6 +41,16 @@ cd backend
 mvn spring-boot:run
 ```
 
+Para desarrollar la interfaz en otra terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Vite sirve la interfaz en `http://localhost:5173` y reenvía las peticiones `/api` a Spring Boot en `http://localhost:8080`.
+
 Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"status":"ok"}`.
 `GET http://localhost:8080/api/subscriptions` devuelve las suscripciones ordenadas por próximo cobro; al principio devuelve `[]`.
 `POST http://localhost:8080/api/subscriptions` crea una suscripción; `GET /api/subscriptions/{id}` consulta una por su identificador.
