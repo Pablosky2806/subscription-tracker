@@ -43,6 +43,24 @@ mvn spring-boot:run
 
 Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"status":"ok"}`.
 `GET http://localhost:8080/api/subscriptions` devuelve las suscripciones ordenadas por próximo cobro; al principio devuelve `[]`.
+`POST http://localhost:8080/api/subscriptions` crea una suscripción; `GET /api/subscriptions/{id}` consulta una por su identificador.
+
+Ejemplo de petición para crear una suscripción desde PowerShell:
+
+```powershell
+$body = @'
+{
+  "name": "Servicio de ejemplo",
+  "amount": 9.99,
+  "currency": "EUR",
+  "billingPeriod": "MONTHLY",
+  "category": "Entretenimiento",
+  "nextChargeDate": "2026-12-20"
+}
+'@
+
+Invoke-RestMethod -Uri "http://localhost:8080/api/subscriptions" -Method Post -ContentType "application/json" -Body $body
+```
 
 PostgreSQL conserva sus datos en el volumen Docker `postgres_data`. Las credenciales de `.env` son solo para desarrollo local; `.env` está excluido de Git.
 
