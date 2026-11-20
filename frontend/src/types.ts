@@ -1,5 +1,14 @@
 export type BillingPeriod = 'MONTHLY' | 'YEARLY'
 
+export interface SubscriptionInput {
+  name: string
+  amount: number
+  currency: string
+  billingPeriod: BillingPeriod
+  category: string
+  nextChargeDate: string
+}
+
 export interface Subscription {
   id: string
   name: string

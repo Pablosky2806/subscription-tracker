@@ -69,24 +69,50 @@
 .error-banner { display: flex; flex-direction: column; gap: 4px; margin: 0 0 17px; padding: 13px 16px; border: 1px solid #f1d6ce; border-radius: 12px; color: #8b4d3e; background: #fff5f1; font-size: 12px; }
 .error-banner span + span { color: #a97568; font-size: 11px; }
 .footer-note { padding: 22px 8px 0; color: #9ca79f; font-size: 11px; text-align: center; }
+.heading-actions { display: flex; align-items: center; gap: 18px; }
+.primary-button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border: 0; border-radius: 11px; color: #fff; background: #3b6657; font-size: 12px; font-weight: 680; cursor: pointer; transition: background .15s ease, transform .15s ease; }
+.primary-button:hover:not(:disabled) { background: #2f5749; transform: translateY(-1px); }
+.primary-button:disabled { opacity: .65; cursor: wait; }
+.primary-button > span { font-size: 18px; line-height: 1; }
+.form-panel { margin-bottom: 18px; border-color: #dce9df; }
+.text-button { padding: 7px 10px; border: 0; border-radius: 8px; color: #718077; background: transparent; font-size: 12px; font-weight: 650; cursor: pointer; }
+.text-button:hover:not(:disabled) { color: #304f42; background: #f1f5f1; }
+.text-button:disabled { opacity: .55; cursor: wait; }
+.subscription-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
+.form-field { min-width: 0; display: flex; flex-direction: column; gap: 7px; color: #68776e; font-size: 11px; font-weight: 650; }
+.form-field-wide { grid-column: span 2; }
+.form-field input, .form-field select { width: 100%; height: 41px; padding: 0 11px; border: 1px solid #e1e8e2; border-radius: 9px; outline: none; color: #35463d; background: #fff; font-size: 12px; font-weight: 500; }
+.form-field input::placeholder { color: #aab3ac; }
+.form-field input:focus, .form-field select:focus { border-color: #6d9b7b; box-shadow: 0 0 0 3px rgba(76,125,93,.12); }
+.amount-input { position: relative; }
+.amount-input input { padding-right: 48px; }
+.amount-input > span { position: absolute; top: 50%; right: 11px; color: #8b978f; font-size: 10px; transform: translateY(-50%); }
+.form-error { grid-column: 1 / -1; margin: 0; color: #a44f3c; font-size: 11px; }
+.form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; padding-top: 2px; }
+.success-banner { margin: 0 0 14px; padding: 11px 14px; border: 1px solid #d6e8d8; border-radius: 11px; color: #416a4d; background: #f1f8f1; font-size: 12px; }
 
 @media (max-width: 780px) {
   .dashboard { width: min(100% - 32px, 580px); padding-top: 34px; }
   .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .metrics-grid .metric-card:last-child { grid-column: 1 / -1; min-height: 135px; }
   .content-grid { grid-template-columns: 1fr; }
+  .subscription-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 520px) {
   .topbar { height: 66px; padding: 0 17px; }
   .dashboard { width: calc(100% - 28px); padding-top: 29px; }
   .page-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .heading-actions { width: 100%; justify-content: space-between; gap: 10px; }
   .today-label { font-size: 11px; }
   .metrics-grid { gap: 10px; }
   .metric-card { min-height: 150px; padding: 17px 15px; }
   .metric-heading { font-size: 11px; }
   .currency-amount strong, .metric-number { font-size: 23px; }
   .panel { padding: 19px 16px; }
+  .subscription-form { grid-template-columns: 1fr; }
+  .form-field-wide, .form-error, .form-actions { grid-column: auto; }
+  .form-actions .primary-button { width: 100%; }
   .charge-row, .subscription-row { gap: 9px; }
   .date-badge { width: 57px; font-size: 11px; }
   .row-amount, .subscription-price > strong { font-size: 11px; }

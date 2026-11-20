@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getDashboardData } from './api'
-import type { Subscription, Summary, UpcomingCharge } from './types'
+import { createSubscription, getDashboardData } from './api'
+import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
+import SubscriptionForm from './SubscriptionForm'
 import './App.css'
 
 function formatMoney(amount: number, currency: string) {
@@ -126,7 +127,7 @@ function SubscriptionList({ subscriptions }: { subscriptions: Subscription[] }) 
     return (
       <div className="empty-state compact-empty">
         <strong>Tu lista está vacía</strong>
-        <p>El siguiente paso será añadir el formulario para registrar una suscripción.</p>
+        <p>Usa «Añadir suscripción» para registrar tu primer servicio.</p>
       </div>
     )
   }
@@ -156,6 +157,24 @@ function App() {
   const [upcomingCharges, setUpcomingCharges] = useState<UpcomingCharge[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
+
+  async function handleSave(input: SubscriptionInput) {
+    const created = await createSubscription(input)
+    setFormOpen(false)
+    setError(null)
+    setNotice(`${created.name} se ha añadido correctamente.`)
+
+    try {
+      const data = await getDashboardData(new AbortController().signal)
+      setSubscriptions(data.subscriptions)
+      setSummary(data.summary)
+      setUpcomingCharges(data.upcomingCharges)
+    } catch {
+      setError('La suscripción se guardó, pero no se pudo actualizar el panel. Recarga la página.')
+    }
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -195,14 +214,30 @@ function App() {
             <h1>Todo bajo control.</h1>
             <p className="page-subtitle">Tus pagos recurrentes, claros de un vistazo.</p>
           </div>
-          <div className="today-label">{new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date())}</div>
+          <div className="heading-actions">
+            <div className="today-label">{new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date())}</div>
+            {!formOpen && (
+              <button className="primary-button" type="button" onClick={() => setFormOpen(true)}>
+                <span aria-hidden="true">+</span> Añadir suscripción
+              </button>
+            )}
+          </div>
         </section>
+
+        {notice && <div className="success-banner" role="status">{notice}</div>}
 
         {error && (
           <div className="error-banner" role="alert">
             <span>{error}</span>
             <span>Comprueba que la API esté en marcha.</span>
           </div>
+        )}
+
+        {formOpen && (
+          <SubscriptionForm
+            onCancel={() => setFormOpen(false)}
+            onSave={handleSave}
+          />
         )}
 
         <section className="metrics-grid" aria-label="Resumen de gastos">

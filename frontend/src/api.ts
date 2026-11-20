@@ -1,4 +1,4 @@
-import type { Subscription, Summary, UpcomingCharge } from './types'
+import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
 
 async function getJson<T>(path: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(path, {
@@ -21,4 +21,22 @@ export async function getDashboardData(signal: AbortSignal) {
   ])
 
   return { subscriptions, summary, upcomingCharges }
+}
+
+export async function createSubscription(input: SubscriptionInput): Promise<Subscription> {
+  const response = await fetch('/api/subscriptions', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  })
+
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo guardar (HTTP ${response.status}).`)
+  }
+
+  return response.json() as Promise<Subscription>
 }
