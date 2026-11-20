@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
-import type { BillingPeriod, SubscriptionInput } from './types'
+import type { BillingPeriod, Subscription, SubscriptionInput } from './types'
 
 interface SubscriptionFormProps {
+  initialValue?: Subscription
   onCancel: () => void
   onSave: (input: SubscriptionInput) => Promise<void>
 }
@@ -12,13 +13,13 @@ function localToday() {
   return today.toISOString().slice(0, 10)
 }
 
-function SubscriptionForm({ onCancel, onSave }: SubscriptionFormProps) {
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [currency, setCurrency] = useState('EUR')
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('MONTHLY')
-  const [category, setCategory] = useState('')
-  const [nextChargeDate, setNextChargeDate] = useState(localToday)
+function SubscriptionForm({ initialValue, onCancel, onSave }: SubscriptionFormProps) {
+  const [name, setName] = useState(initialValue?.name ?? '')
+  const [amount, setAmount] = useState(initialValue ? String(initialValue.amount) : '')
+  const [currency, setCurrency] = useState(initialValue?.currency ?? 'EUR')
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(initialValue?.billingPeriod ?? 'MONTHLY')
+  const [category, setCategory] = useState(initialValue?.category ?? '')
+  const [nextChargeDate, setNextChargeDate] = useState(initialValue?.nextChargeDate ?? localToday)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,8 +48,8 @@ function SubscriptionForm({ onCancel, onSave }: SubscriptionFormProps) {
     <section className="panel form-panel" aria-labelledby="form-title">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">NUEVO REGISTRO</p>
-          <h2 id="form-title">Añadir suscripción</h2>
+          <p className="eyebrow">{initialValue ? 'EDITAR REGISTRO' : 'NUEVO REGISTRO'}</p>
+          <h2 id="form-title">{initialValue ? 'Editar suscripción' : 'Añadir suscripción'}</h2>
         </div>
         <button className="text-button" type="button" onClick={onCancel} disabled={saving}>
           Cancelar
@@ -146,7 +147,7 @@ function SubscriptionForm({ onCancel, onSave }: SubscriptionFormProps) {
 
         <div className="form-actions">
           <button className="primary-button" type="submit" disabled={saving}>
-            {saving ? 'Guardando…' : 'Guardar suscripción'}
+            {saving ? 'Guardando…' : initialValue ? 'Guardar cambios' : 'Guardar suscripción'}
           </button>
         </div>
       </form>

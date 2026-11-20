@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createSubscription, getDashboardData } from './api'
+import { archiveSubscription, createSubscription, getDashboardData, updateSubscription } from './api'
 import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
 import SubscriptionForm from './SubscriptionForm'
 import './App.css'
@@ -122,7 +122,17 @@ function CategoryBreakdown({ summary }: { summary: Summary }) {
   )
 }
 
-function SubscriptionList({ subscriptions }: { subscriptions: Subscription[] }) {
+function SubscriptionList({
+  subscriptions,
+  onEdit,
+  onArchive,
+  busyId,
+}: {
+  subscriptions: Subscription[]
+  onEdit: (subscription: Subscription) => void
+  onArchive: (subscription: Subscription) => void
+  busyId: string | null
+}) {
   if (subscriptions.length === 0) {
     return (
       <div className="empty-state compact-empty">
@@ -145,6 +155,30 @@ function SubscriptionList({ subscriptions }: { subscriptions: Subscription[] }) 
             <strong>{formatMoney(subscription.amount, subscription.currency)}</strong>
             {!subscription.active && <small>Archivada</small>}
           </div>
+          <div className="subscription-actions">
+            <button
+              className="row-action-button"
+              type="button"
+              aria-label={`Editar ${subscription.name}`}
+              title="Editar"
+              disabled={busyId === subscription.id}
+              onClick={() => onEdit(subscription)}
+            >
+              ✎
+            </button>
+            {subscription.active && (
+              <button
+                className="row-action-button archive-action"
+                type="button"
+                aria-label={`Archivar ${subscription.name}`}
+                title="Archivar"
+                disabled={busyId === subscription.id}
+                onClick={() => onArchive(subscription)}
+              >
+                ↓
+              </button>
+            )}
+          </div>
         </li>
       ))}
     </ul>
@@ -159,20 +193,58 @@ function App() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
+  const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  async function refreshDashboard() {
+    const data = await getDashboardData(new AbortController().signal)
+    setSubscriptions(data.subscriptions)
+    setSummary(data.summary)
+    setUpcomingCharges(data.upcomingCharges)
+  }
 
   async function handleSave(input: SubscriptionInput) {
-    const created = await createSubscription(input)
+    const wasEditing = editingSubscription !== null
+    const saved = editingSubscription
+      ? await updateSubscription(editingSubscription.id, input)
+      : await createSubscription(input)
+
     setFormOpen(false)
+    setEditingSubscription(null)
     setError(null)
-    setNotice(`${created.name} se ha añadido correctamente.`)
+    setNotice(wasEditing
+      ? `${saved.name} se ha actualizado correctamente.`
+      : `${saved.name} se ha añadido correctamente.`)
 
     try {
-      const data = await getDashboardData(new AbortController().signal)
-      setSubscriptions(data.subscriptions)
-      setSummary(data.summary)
-      setUpcomingCharges(data.upcomingCharges)
+      await refreshDashboard()
     } catch {
-      setError('La suscripción se guardó, pero no se pudo actualizar el panel. Recarga la página.')
+      setError('El cambio se guardó, pero no se pudo actualizar el panel. Recarga la página.')
+    }
+  }
+
+  async function handleArchive(subscription: Subscription) {
+    const shouldArchive = window.confirm(
+      `¿Archivar ${subscription.name}? Dejará de contar en los gastos y próximos cobros, pero no se borrará.`,
+    )
+    if (!shouldArchive) return
+
+    setBusyId(subscription.id)
+    setError(null)
+    setNotice(null)
+
+    try {
+      const archived = await archiveSubscription(subscription.id)
+      setNotice(`${archived.name} se ha archivado.`)
+      try {
+        await refreshDashboard()
+      } catch {
+        setError('Se archivó, pero no se pudo actualizar el panel. Recarga la página.')
+      }
+    } catch (archiveError: unknown) {
+      setError(archiveError instanceof Error ? archiveError.message : 'No se pudo archivar la suscripción.')
+    } finally {
+      setBusyId(null)
     }
   }
 
@@ -217,7 +289,11 @@ function App() {
           <div className="heading-actions">
             <div className="today-label">{new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date())}</div>
             {!formOpen && (
-              <button className="primary-button" type="button" onClick={() => setFormOpen(true)}>
+              <button className="primary-button" type="button" onClick={() => {
+                setEditingSubscription(null)
+                setNotice(null)
+                setFormOpen(true)
+              }}>
                 <span aria-hidden="true">+</span> Añadir suscripción
               </button>
             )}
@@ -235,7 +311,12 @@ function App() {
 
         {formOpen && (
           <SubscriptionForm
-            onCancel={() => setFormOpen(false)}
+            key={editingSubscription?.id ?? 'new-subscription'}
+            initialValue={editingSubscription ?? undefined}
+            onCancel={() => {
+              setFormOpen(false)
+              setEditingSubscription(null)
+            }}
             onSave={handleSave}
           />
         )}
@@ -294,7 +375,18 @@ function App() {
             </div>
             {!loading && <span className="count-pill">{subscriptions.length}</span>}
           </div>
-          {loading ? <p className="loading-message">Cargando suscripciones…</p> : <SubscriptionList subscriptions={subscriptions} />}
+          {loading ? <p className="loading-message">Cargando suscripciones…</p> : (
+            <SubscriptionList
+              subscriptions={subscriptions}
+              onEdit={(subscription) => {
+                setNotice(null)
+                setEditingSubscription(subscription)
+                setFormOpen(true)
+              }}
+              onArchive={handleArchive}
+              busyId={busyId}
+            />
+          )}
         </section>
 
         <footer className="footer-note">Tus datos permanecen en tu propio servidor.</footer>

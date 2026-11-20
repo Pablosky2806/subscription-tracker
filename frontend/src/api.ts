@@ -23,19 +23,36 @@ export async function getDashboardData(signal: AbortSignal) {
   return { subscriptions, summary, upcomingCharges }
 }
 
-export async function createSubscription(input: SubscriptionInput): Promise<Subscription> {
-  const response = await fetch('/api/subscriptions', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
+async function writeSubscription(path: string, method: 'POST' | 'PUT', input: SubscriptionInput) {
+  const response = await fetch(path, {
+    method,
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo guardar (HTTP ${response.status}).`)
+  }
+  return response.json() as Promise<Subscription>
+}
+
+export function createSubscription(input: SubscriptionInput) {
+  return writeSubscription('/api/subscriptions', 'POST', input)
+}
+
+export function updateSubscription(id: string, input: SubscriptionInput) {
+  return writeSubscription(`/api/subscriptions/${encodeURIComponent(id)}`, 'PUT', input)
+}
+
+export async function archiveSubscription(id: string): Promise<Subscription> {
+  const response = await fetch(`/api/subscriptions/${encodeURIComponent(id)}/archive`, {
+    method: 'PATCH',
+    headers: { Accept: 'application/json' },
   })
 
   if (!response.ok) {
     const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
-    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo guardar (HTTP ${response.status}).`)
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo archivar (HTTP ${response.status}).`)
   }
 
   return response.json() as Promise<Subscription>
