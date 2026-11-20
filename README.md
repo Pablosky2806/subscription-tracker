@@ -54,4 +54,6 @@ Cada suscripción tendrá:
 - `nextChargeDate`: fecha del próximo cobro.
 - `active`: indica si sigue activa.
 
+En Java, estos datos se representan con el `record` inmutable `Subscription`; `BillingPeriod` limita la frecuencia a `MONTHLY` o `YEARLY`. El importe usa `BigDecimal` para evitar los errores de precisión de `float` o `double` con dinero. El modelo comprueba sus datos obligatorios al crearse.
+
 Los totales mensuales y anuales serán estimaciones normalizadas: una suscripción mensual cuenta 12 veces al año; una anual cuenta una vez al año y su equivalente mensual será el importe anual dividido entre 12. La primera versión asumirá una sola moneda por instalación para que los totales no mezclen monedas incompatibles.
