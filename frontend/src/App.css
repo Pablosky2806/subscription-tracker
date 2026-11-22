@@ -8,8 +8,6 @@
 .brand { display: inline-flex; align-items: center; gap: 11px; color: #24352f; font-size: 17px; font-weight: 740; letter-spacing: -.5px; }
 .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: #3b6657; font-size: 16px; font-weight: 750; }
 .brand-period { color: #d89b49; }
-.local-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid #e0e8e1; border-radius: 99px; color: #5d7067; background: #fff; font-size: 12px; font-weight: 650; }
-.local-badge > span { width: 7px; height: 7px; border-radius: 50%; background: #60a47b; box-shadow: 0 0 0 3px #e8f3eb; }
 .dashboard { width: min(1160px, calc(100% - 48px)); margin: 0 auto; padding: 48px 0 30px; }
 .page-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
 .eyebrow { margin: 0 0 8px; color: #77877e; font-size: 10px; font-weight: 760; letter-spacing: 1.15px; }

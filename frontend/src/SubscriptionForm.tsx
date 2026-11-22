@@ -13,18 +13,47 @@ function localToday() {
   return today.toISOString().slice(0, 10)
 }
 
+function formatDateForInput(isoDate: string) {
+  const [year, month, day] = isoDate.split('-')
+  return `${day}/${month}/${year}`
+}
+
+function parseDateInput(value: string) {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim())
+  if (!match) return null
+
+  const [, day, month, year] = match
+  const parsed = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
+  if (
+    parsed.getUTCFullYear() !== Number(year)
+    || parsed.getUTCMonth() !== Number(month) - 1
+    || parsed.getUTCDate() !== Number(day)
+  ) return null
+
+  return `${year}-${month}-${day}`
+}
+
 function SubscriptionForm({ initialValue, onCancel, onSave }: SubscriptionFormProps) {
   const [name, setName] = useState(initialValue?.name ?? '')
   const [amount, setAmount] = useState(initialValue ? String(initialValue.amount) : '')
   const [currency, setCurrency] = useState(initialValue?.currency ?? 'EUR')
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(initialValue?.billingPeriod ?? 'MONTHLY')
+  const [intervalDays, setIntervalDays] = useState(String(initialValue?.intervalDays ?? 30))
   const [category, setCategory] = useState(initialValue?.category ?? '')
-  const [nextChargeDate, setNextChargeDate] = useState(initialValue?.nextChargeDate ?? localToday)
+  const [nextChargeDate, setNextChargeDate] = useState(
+    formatDateForInput(initialValue?.nextChargeDate ?? localToday()),
+  )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const parsedNextChargeDate = parseDateInput(nextChargeDate)
+    if (!parsedNextChargeDate) {
+      setError('Escribe una fecha válida con el formato DD/MM/AAAA.')
+      return
+    }
+
     setSaving(true)
     setError(null)
 
@@ -34,8 +63,9 @@ function SubscriptionForm({ initialValue, onCancel, onSave }: SubscriptionFormPr
         amount: Number(amount),
         currency: currency.trim().toUpperCase(),
         billingPeriod,
+        intervalDays: billingPeriod === 'EVERY_N_DAYS' ? Number(intervalDays) : null,
         category: category.trim(),
-        nextChargeDate,
+        nextChargeDate: parsedNextChargeDate,
       })
     } catch (submitError: unknown) {
       setError(submitError instanceof Error ? submitError.message : 'No se pudo guardar la suscripción.')
@@ -110,8 +140,25 @@ function SubscriptionForm({ initialValue, onCancel, onSave }: SubscriptionFormPr
           >
             <option value="MONTHLY">Mensual</option>
             <option value="YEARLY">Anual</option>
+            <option value="EVERY_N_DAYS">Cada X días</option>
           </select>
         </label>
+
+        {billingPeriod === 'EVERY_N_DAYS' && (
+          <label className="form-field">
+            <span>Cada cuántos días</span>
+            <input
+              max="3650"
+              min="1"
+              placeholder="24"
+              required
+              step="1"
+              type="number"
+              value={intervalDays}
+              onChange={(event) => setIntervalDays(event.target.value)}
+            />
+          </label>
+        )}
 
         <label className="form-field">
           <span>Categoría</span>
@@ -127,8 +174,13 @@ function SubscriptionForm({ initialValue, onCancel, onSave }: SubscriptionFormPr
         <label className="form-field">
           <span>Próximo cobro</span>
           <input
+            autoComplete="off"
+            inputMode="numeric"
+            maxLength={10}
+            placeholder="DD/MM/AAAA"
             required
-            type="date"
+            title="Escribe la fecha como día/mes/año, por ejemplo 24/12/2026."
+            type="text"
             value={nextChargeDate}
             onChange={(event) => setNextChargeDate(event.target.value)}
           />

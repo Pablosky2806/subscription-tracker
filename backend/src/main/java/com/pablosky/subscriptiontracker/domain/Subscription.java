@@ -13,8 +13,22 @@ public record Subscription(
         BillingPeriod billingPeriod,
         String category,
         LocalDate nextChargeDate,
-        boolean active
+        boolean active,
+        Integer intervalDays
 ) {
+
+    public Subscription(
+            UUID id,
+            String name,
+            BigDecimal amount,
+            String currency,
+            BillingPeriod billingPeriod,
+            String category,
+            LocalDate nextChargeDate,
+            boolean active
+    ) {
+        this(id, name, amount, currency, billingPeriod, category, nextChargeDate, active, null);
+    }
 
     public Subscription {
         Objects.requireNonNull(id, "id is required");
@@ -28,6 +42,13 @@ public record Subscription(
             throw new IllegalArgumentException("currency must be a three-letter uppercase code");
         }
         Objects.requireNonNull(billingPeriod, "billingPeriod is required");
+        if (billingPeriod == BillingPeriod.EVERY_N_DAYS) {
+            if (intervalDays == null || intervalDays < 1 || intervalDays > 3650) {
+                throw new IllegalArgumentException("intervalDays must be between 1 and 3650 for recurring-day subscriptions");
+            }
+        } else if (intervalDays != null) {
+            throw new IllegalArgumentException("intervalDays is only valid for recurring-day subscriptions");
+        }
         if (category == null || category.isBlank()) {
             throw new IllegalArgumentException("category must not be blank");
         }

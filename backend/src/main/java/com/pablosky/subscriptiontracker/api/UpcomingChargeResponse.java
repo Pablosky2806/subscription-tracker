@@ -13,6 +13,7 @@ public record UpcomingChargeResponse(
         BigDecimal amount,
         String currency,
         BillingPeriod billingPeriod,
+        Integer intervalDays,
         String category,
         LocalDate nextChargeDate,
         long daysUntilCharge
@@ -25,6 +26,7 @@ public record UpcomingChargeResponse(
                 subscription.amount(),
                 subscription.currency(),
                 subscription.billingPeriod(),
+                subscription.intervalDays(),
                 subscription.category(),
                 subscription.nextChargeDate(),
                 daysUntilCharge

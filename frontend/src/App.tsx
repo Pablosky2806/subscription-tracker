@@ -17,10 +17,13 @@ function formatMoney(amount: number, currency: string) {
 }
 
 function formatDate(date: string) {
-  return new Intl.DateTimeFormat('es-ES', {
-    day: 'numeric',
-    month: 'short',
-  }).format(new Date(`${date}T00:00:00`))
+  const [year, month, day] = date.split('-')
+  return `${day}/${month}/${year}`
+}
+
+function formatBillingFrequency(subscription: Pick<Subscription, 'billingPeriod' | 'intervalDays'>) {
+  if (subscription.billingPeriod === 'EVERY_N_DAYS') return `Cada ${subscription.intervalDays} días`
+  return subscription.billingPeriod === 'YEARLY' ? 'Anual' : 'Mensual'
 }
 
 function downloadBackup(subscriptions: Subscription[]) {
@@ -89,7 +92,7 @@ function UpcomingList({ charges }: { charges: UpcomingCharge[] }) {
           </div>
           <div className="row-description">
             <strong>{charge.name}</strong>
-            <span>{charge.category}</span>
+            <span>{charge.category} · {formatBillingFrequency(charge)}</span>
           </div>
           <strong className="row-amount">{formatMoney(charge.amount, charge.currency)}</strong>
         </li>
@@ -171,7 +174,7 @@ function SubscriptionList({
           <span className="service-mark" aria-hidden="true">{subscription.name.slice(0, 1).toUpperCase()}</span>
           <div className="row-description">
             <strong>{subscription.name}</strong>
-            <span>{subscription.category} · {subscription.billingPeriod === 'MONTHLY' ? 'Mensual' : 'Anual'}</span>
+            <span>{subscription.category} · {formatBillingFrequency(subscription)}</span>
           </div>
           <div className="subscription-price">
             <strong>{formatMoney(subscription.amount, subscription.currency)}</strong>
@@ -407,7 +410,6 @@ function App() {
           <span className="brand-mark">S</span>
           <span>suscripciones<span className="brand-period">.</span></span>
         </a>
-        <span className="local-badge"><span /> Self-hosted</span>
       </header>
 
       <main className="dashboard">

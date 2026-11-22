@@ -1,10 +1,11 @@
-export type BillingPeriod = 'MONTHLY' | 'YEARLY'
+export type BillingPeriod = 'MONTHLY' | 'YEARLY' | 'EVERY_N_DAYS'
 
 export interface SubscriptionInput {
   name: string
   amount: number
   currency: string
   billingPeriod: BillingPeriod
+  intervalDays: number | null
   category: string
   nextChargeDate: string
 }
@@ -15,6 +16,7 @@ export interface Subscription {
   amount: number
   currency: string
   billingPeriod: BillingPeriod
+  intervalDays: number | null
   category: string
   nextChargeDate: string
   active: boolean
@@ -43,6 +45,7 @@ export interface UpcomingCharge {
   amount: number
   currency: string
   billingPeriod: BillingPeriod
+  intervalDays: number | null
   category: string
   nextChargeDate: string
   daysUntilCharge: number

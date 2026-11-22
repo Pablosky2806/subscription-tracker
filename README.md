@@ -139,11 +139,12 @@ Cada suscripción tendrá:
 - `name`: nombre del servicio.
 - `amount`: importe por cobro, guardado con precisión decimal.
 - `currency`: código de moneda (por ejemplo, EUR).
-- `billingPeriod`: mensual o anual en la primera versión.
+- `billingPeriod`: mensual, anual o cada una cantidad concreta de días.
+- `intervalDays`: número de días entre cobros cuando `billingPeriod` es `EVERY_N_DAYS`.
 - `category`: categoría elegida por el usuario.
 - `nextChargeDate`: fecha del próximo cobro.
 - `active`: indica si sigue activa.
 
-En Java, estos datos se representan con el `record` inmutable `Subscription`; `BillingPeriod` limita la frecuencia a `MONTHLY` o `YEARLY`. El importe usa `BigDecimal` para evitar los errores de precisión de `float` o `double` con dinero. El modelo comprueba sus datos obligatorios al crearse.
+En Java, estos datos se representan con el `record` inmutable `Subscription`; `BillingPeriod` admite `MONTHLY`, `YEARLY` o `EVERY_N_DAYS`, cuyo intervalo se guarda en `intervalDays`. El importe usa `BigDecimal` para evitar los errores de precisión de `float` o `double` con dinero. El modelo comprueba sus datos obligatorios al crearse.
 
-Los totales mensuales y anuales serán estimaciones normalizadas: una suscripción mensual cuenta 12 veces al año; una anual cuenta una vez al año y su equivalente mensual será el importe anual dividido entre 12. La primera versión asumirá una sola moneda por instalación para que los totales no mezclen monedas incompatibles.
+Los totales mensuales y anuales son estimaciones normalizadas: una suscripción mensual cuenta 12 veces al año; una anual cuenta una vez al año y su equivalente mensual es el importe anual dividido entre 12. Para intervalos por días se usa un año medio de 365,25 días. La primera versión asumirá una sola moneda por instalación para que los totales no mezclen monedas incompatibles.

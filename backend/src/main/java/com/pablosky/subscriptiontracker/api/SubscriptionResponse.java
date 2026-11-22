@@ -13,6 +13,7 @@ public record SubscriptionResponse(
         BigDecimal amount,
         String currency,
         BillingPeriod billingPeriod,
+        Integer intervalDays,
         String category,
         LocalDate nextChargeDate,
         boolean active
@@ -25,6 +26,7 @@ public record SubscriptionResponse(
                 subscription.amount(),
                 subscription.currency(),
                 subscription.billingPeriod(),
+                subscription.intervalDays(),
                 subscription.category(),
                 subscription.nextChargeDate(),
                 subscription.active()

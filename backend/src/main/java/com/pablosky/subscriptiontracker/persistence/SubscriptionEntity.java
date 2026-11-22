@@ -34,6 +34,9 @@ public class SubscriptionEntity {
     @Column(name = "billing_period", nullable = false, length = 16)
     private BillingPeriod billingPeriod;
 
+    @Column(name = "billing_interval_days")
+    private Integer intervalDays;
+
     @Column(nullable = false, length = 80)
     private String category;
 
@@ -53,13 +56,14 @@ public class SubscriptionEntity {
         this.amount = subscription.amount();
         this.currency = subscription.currency();
         this.billingPeriod = subscription.billingPeriod();
+        this.intervalDays = subscription.intervalDays();
         this.category = subscription.category();
         this.nextChargeDate = subscription.nextChargeDate();
         this.active = subscription.active();
     }
 
     public Subscription toDomain() {
-        return new Subscription(id, name, amount, currency, billingPeriod, category, nextChargeDate, active);
+        return new Subscription(id, name, amount, currency, billingPeriod, category, nextChargeDate, active, intervalDays);
     }
 
     public void updateFrom(Subscription subscription) {
@@ -67,6 +71,7 @@ public class SubscriptionEntity {
         this.amount = subscription.amount();
         this.currency = subscription.currency();
         this.billingPeriod = subscription.billingPeriod();
+        this.intervalDays = subscription.intervalDays();
         this.category = subscription.category();
         this.nextChargeDate = subscription.nextChargeDate();
     }

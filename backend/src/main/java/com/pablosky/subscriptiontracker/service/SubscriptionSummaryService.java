@@ -16,6 +16,7 @@ import java.util.TreeMap;
 public class SubscriptionSummaryService {
 
     private static final BigDecimal TWELVE = BigDecimal.valueOf(12);
+    private static final BigDecimal DAYS_PER_YEAR = new BigDecimal("365.25");
     private static final BigDecimal ZERO = BigDecimal.ZERO;
 
     private final SubscriptionRepository subscriptionRepository;
@@ -44,12 +45,20 @@ public class SubscriptionSummaryService {
         if (subscription.billingPeriod() == BillingPeriod.MONTHLY) {
             return subscription.amount();
         }
+        if (subscription.billingPeriod() == BillingPeriod.EVERY_N_DAYS) {
+            return annualEquivalent(subscription).divide(TWELVE, 10, RoundingMode.HALF_UP);
+        }
         return subscription.amount().divide(TWELVE, 10, RoundingMode.HALF_UP);
     }
 
     private static BigDecimal annualEquivalent(Subscription subscription) {
         if (subscription.billingPeriod() == BillingPeriod.YEARLY) {
             return subscription.amount();
+        }
+        if (subscription.billingPeriod() == BillingPeriod.EVERY_N_DAYS) {
+            return subscription.amount()
+                    .multiply(DAYS_PER_YEAR)
+                    .divide(BigDecimal.valueOf(subscription.intervalDays()), 10, RoundingMode.HALF_UP);
         }
         return subscription.amount().multiply(TWELVE);
     }
