@@ -24,6 +24,9 @@ interface LinkedChargeSummary {
   currency: string
   count: number
   total: number
+  expectedAmount: number | null
+  expectedCurrency: string | null
+  charges: MoneyMovement[]
 }
 
 function formatMoney(amount: number, currency: string) {
@@ -88,9 +91,13 @@ function summarizeLinkedCharges(
       currency: movement.currency,
       count: 0,
       total: 0,
+      expectedAmount: subscriptions.find((subscription) => subscription.id === movement.subscriptionId)?.amount ?? null,
+      expectedCurrency: subscriptions.find((subscription) => subscription.id === movement.subscriptionId)?.currency ?? null,
+      charges: [],
     }
     group.count += 1
     group.total += movement.amount
+    group.charges.push(movement)
     groups.set(key, group)
   }
 
@@ -364,7 +371,7 @@ function MovementsPanel({ refreshKey = 0, subscriptions = [] }: { refreshKey?: n
         <div className="monthly-summary-heading">
           <div>
             <p className="eyebrow">PAGOS REALES</p>
-            <h3 id="linked-charges-title">Cargos vinculados a suscripciones</h3>
+            <h3 id="linked-charges-title">Cargos reales vs importe previsto</h3>
           </div>
           <span className="linked-charge-month">{monthLabel(selectedMonth)}</span>
         </div>
@@ -374,11 +381,46 @@ function MovementsPanel({ refreshKey = 0, subscriptions = [] }: { refreshKey?: n
           <ul className="linked-charge-list">
             {linkedChargeSummaries.map((charge) => (
               <li key={`${charge.subscriptionId}-${charge.currency}`}>
-                <span className="linked-charge-service">
-                  <strong>{charge.name}</strong>
-                  <small>{charge.count} {charge.count === 1 ? 'cargo real' : 'cargos reales'} · {charge.currency}</small>
-                </span>
-                <strong className="linked-charge-total">{formatMoney(charge.total, charge.currency)}</strong>
+                <div className="linked-charge-summary-row">
+                  <span className="linked-charge-service">
+                    <strong>{charge.name}</strong>
+                    <small>{charge.count} {charge.count === 1 ? 'cargo real' : 'cargos reales'} · {charge.currency}</small>
+                    {charge.expectedAmount !== null && charge.expectedCurrency && (
+                      <small>Importe previsto por cobro: {formatMoney(charge.expectedAmount, charge.expectedCurrency)}</small>
+                    )}
+                  </span>
+                  <strong className="linked-charge-total">{formatMoney(charge.total, charge.currency)}</strong>
+                </div>
+                <ul className="linked-charge-comparisons">
+                  {charge.charges.map((movement) => {
+                    const sameCurrency = charge.expectedCurrency === movement.currency
+                    const difference = sameCurrency && charge.expectedAmount !== null
+                      ? movement.amount - charge.expectedAmount
+                      : null
+                    const matches = difference !== null && Math.abs(difference) < 0.005
+                    return (
+                      <li key={movement.id}>
+                        <span className="linked-charge-comparison-label">
+                          <time dateTime={movement.movementDate}>{isoDateToDmy(movement.movementDate)}</time>
+                          <small>{movement.description}</small>
+                        </span>
+                        <span className="linked-charge-comparison-values">
+                          <small>Previsto {charge.expectedAmount !== null && charge.expectedCurrency
+                            ? formatMoney(charge.expectedAmount, charge.expectedCurrency)
+                            : '—'}</small>
+                          <strong>{formatMoney(movement.amount, movement.currency)}</strong>
+                          <small className={matches ? 'comparison-match' : 'comparison-difference'}>
+                            {difference === null
+                              ? 'Moneda distinta'
+                              : matches
+                                ? 'Coincide'
+                                : `${difference > 0 ? '+' : '−'}${formatMoney(Math.abs(difference), movement.currency)} de diferencia`}
+                          </small>
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
               </li>
             ))}
           </ul>

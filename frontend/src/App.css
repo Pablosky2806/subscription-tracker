@@ -108,10 +108,21 @@
 .linked-charge-month { color: #7e8c82; font-size: 11px; text-transform: capitalize; }
 .linked-charge-list { padding: 0; margin: 0; list-style: none; }
 .linked-charge-list li { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #f0f2ef; }
+.linked-charge-list > li { align-items: stretch; flex-direction: column; gap: 0; padding: 8px 0; }
+.linked-charge-summary-row { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .linked-charge-service { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .linked-charge-service strong { overflow: hidden; color: #394a40; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .linked-charge-service small { color: #929d95; font-size: 10px; }
 .linked-charge-total { color: #91634b; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.linked-charge-comparisons { padding: 0; margin: 0; list-style: none; }
+.linked-charge-comparisons li { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0 7px 12px; border-top: 1px dashed #e8ece7; }
+.linked-charge-comparison-label, .linked-charge-comparison-values { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.linked-charge-comparison-label time { color: #7e8c82; font-size: 10px; }
+.linked-charge-comparison-label small, .linked-charge-comparison-values small { overflow: hidden; color: #929d95; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.linked-charge-comparison-values { flex: 0 0 auto; align-items: flex-end; text-align: right; }
+.linked-charge-comparison-values strong { color: #46574d; font-size: 11px; font-variant-numeric: tabular-nums; }
+.linked-charge-comparison-values .comparison-match { color: #3c7656; }
+.linked-charge-comparison-values .comparison-difference { color: #a45b3f; }
 .monthly-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 15px; }
 .monthly-summary-heading .eyebrow { margin-bottom: 4px; }
 .monthly-summary-heading h3 { margin: 0; color: #34463c; font-size: 14px; font-weight: 680; }
