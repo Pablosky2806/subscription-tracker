@@ -152,6 +152,93 @@ class SubscriptionApplicationIntegrationTest {
     }
 
     @Test
+    void importsActiveAndArchivedSubscriptionsFromBackup() throws Exception {
+        var activeId = UUID.randomUUID();
+        var archivedId = UUID.randomUUID();
+        var backup = backup(
+                backupItem(activeId, "Music service", "Entertainment", true),
+                backupItem(archivedId, "Old video service", "Entertainment", false)
+        );
+
+        mockMvc.perform(post("/api/subscriptions/import")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(backup))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imported").value(2))
+                .andExpect(jsonPath("$.skippedExisting").value(0));
+
+        assertThat(repository.findAll())
+                .extracting(entity -> entity.toDomain().active())
+                .containsExactlyInAnyOrder(true, false);
+        assertThat(repository.findById(archivedId))
+                .isPresent()
+                .get()
+                .extracting(entity -> entity.toDomain().name())
+                .isEqualTo("Old video service");
+    }
+
+    @Test
+    void importingBackupAgainSkipsExistingIdsWithoutOverwritingOrDuplicating() throws Exception {
+        var existingId = UUID.randomUUID();
+        var newId = UUID.randomUUID();
+        repository.saveAndFlush(new SubscriptionEntity(new Subscription(
+                existingId,
+                "My current name",
+                new BigDecimal("15.00"),
+                "EUR",
+                BillingPeriod.MONTHLY,
+                "Software",
+                LocalDate.now().plusDays(5),
+                false
+        )));
+        var backup = backup(
+                backupItem(existingId, "Older backup name", "Entertainment", true),
+                backupItem(newId, "New service", "Entertainment", true)
+        );
+
+        mockMvc.perform(post("/api/subscriptions/import")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(backup))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imported").value(1))
+                .andExpect(jsonPath("$.skippedExisting").value(1));
+
+        mockMvc.perform(post("/api/subscriptions/import")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(backup))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imported").value(0))
+                .andExpect(jsonPath("$.skippedExisting").value(2));
+
+        assertThat(repository.count()).isEqualTo(2);
+        assertThat(repository.findById(existingId))
+                .isPresent()
+                .get()
+                .extracting(entity -> entity.toDomain().name())
+                .isEqualTo("My current name");
+        assertThat(repository.findById(existingId))
+                .isPresent()
+                .get()
+                .extracting(entity -> entity.toDomain().active())
+                .isEqualTo(false);
+    }
+
+    @Test
+    void rejectsInvalidBackupWithoutSavingAnySubscriptions() throws Exception {
+        var backup = backup(
+                backupItem(UUID.randomUUID(), "Valid service", "Entertainment", true),
+                backupItem(UUID.randomUUID(), "Invalid service", " ", true)
+        );
+
+        mockMvc.perform(post("/api/subscriptions/import")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(backup))
+                .andExpect(status().isBadRequest());
+
+        assertThat(repository.count()).isZero();
+    }
+
+    @Test
     void findsOnlyActiveSubscriptions() {
         repository.saveAllAndFlush(List.of(
                 new SubscriptionEntity(subscription("Active service", LocalDate.now().plusDays(2), true)),
@@ -207,5 +294,30 @@ class SubscriptionApplicationIntegrationTest {
                   "nextChargeDate": "%s"
                 }
                 """.formatted(name, amount, currency, category, LocalDate.now().plusDays(10));
+    }
+
+    private static String backup(String... subscriptions) {
+        return """
+                {
+                  "format": "subscription-tracker-backup",
+                  "version": 1,
+                  "subscriptions": [%s]
+                }
+                """.formatted(String.join(",", subscriptions));
+    }
+
+    private static String backupItem(UUID id, String name, String category, boolean active) {
+        return """
+                {
+                  "id": "%s",
+                  "name": "%s",
+                  "amount": 9.99,
+                  "currency": "EUR",
+                  "billingPeriod": "MONTHLY",
+                  "category": "%s",
+                  "nextChargeDate": "%s",
+                  "active": %s
+                }
+                """.formatted(id, name, category, LocalDate.now().plusDays(10), active);
     }
 }
