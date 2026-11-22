@@ -1,4 +1,18 @@
 export type BillingPeriod = 'MONTHLY' | 'YEARLY' | 'EVERY_N_DAYS'
+export type MovementType = 'INCOME' | 'EXPENSE'
+
+export interface MoneyMovementInput {
+  description: string
+  amount: number
+  currency: string
+  type: MovementType
+  category: string
+  movementDate: string
+}
+
+export interface MoneyMovement extends MoneyMovementInput {
+  id: string
+}
 
 export interface SubscriptionInput {
   name: string

@@ -9,6 +9,7 @@ Aplicación self-hosted para registrar suscripciones y consultar cuánto cuestan
 - Mostrar gasto mensual y anual estimado.
 - Mostrar próximos cobros ordenados por fecha.
 - Mostrar gasto agrupado por categoría.
+- Registrar gastos e ingresos manualmente con fecha, concepto, importe y categoría.
 - Exportar e importar copias JSON; la importación conserva los datos existentes y omite suscripciones con el mismo identificador.
 
 ## Arquitectura acordada
@@ -91,6 +92,7 @@ Con el servidor en marcha, `GET http://localhost:8080/api/health` devuelve `{"st
 `PUT /api/subscriptions/{id}` actualiza sus datos, `PATCH /api/subscriptions/{id}/archive` la archiva sin eliminarla y `PATCH /api/subscriptions/{id}/restore` la restaura.
 `GET http://localhost:8080/api/summary` devuelve los totales mensuales y anuales estimados, agrupados por moneda y categoría; solo cuenta suscripciones activas.
 `GET http://localhost:8080/api/subscriptions/upcoming` devuelve los próximos cobros de 30 días; `?days=90` amplía la ventana hasta 90 días.
+`GET http://localhost:8080/api/movements` lista los gastos e ingresos guardados, `POST /api/movements` registra uno y `DELETE /api/movements/{id}` lo borra.
 
 Ejemplo de petición para crear una suscripción desde PowerShell:
 

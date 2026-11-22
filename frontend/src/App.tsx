@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { archiveSubscription, createSubscription, getDashboardData, getUpcomingCharges, importSubscriptionBackup, restoreSubscription, updateSubscription } from './api'
 import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
 import SubscriptionForm from './SubscriptionForm'
+import MovementsPanel from './MovementsPanel'
+import { isoDateToDmy } from './dateUtils'
 import './App.css'
 
 function formatMoney(amount: number, currency: string) {
@@ -17,8 +19,7 @@ function formatMoney(amount: number, currency: string) {
 }
 
 function formatDate(date: string) {
-  const [year, month, day] = date.split('-')
-  return `${day}/${month}/${year}`
+  return isoDateToDmy(date)
 }
 
 function formatBillingFrequency(subscription: Pick<Subscription, 'billingPeriod' | 'intervalDays'>) {
@@ -596,6 +597,8 @@ function App() {
             />
           )}
         </section>
+
+        <MovementsPanel />
 
         <footer className="footer-note">Tus datos permanecen en tu propio servidor.</footer>
       </main>

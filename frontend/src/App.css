@@ -73,12 +73,26 @@
 .progress-track { height: 5px; overflow: hidden; border-radius: 99px; background: #edf1ed; }
 .progress-track > span { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg,#5c8b70,#91b49a); }
 .subscription-row { min-height: 73px; }
+.movements-panel { margin-top: 18px; }
+.movement-heading-actions { display: flex; align-items: center; gap: 9px; }
+.movement-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 18px; padding: 18px; border: 1px solid #edf1ed; border-radius: 13px; background: #fbfcfa; }
+.movement-list { padding: 0; margin: 0; list-style: none; }
+.movement-row { min-height: 68px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #f0f2ef; }
+.movement-date { width: 83px; flex: 0 0 auto; color: #849088; font-size: 11px; font-variant-numeric: tabular-nums; }
+.movement-type-mark { width: 30px; height: 30px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 10px; font-size: 17px; font-weight: 650; }
+.movement-type-mark.is-income { color: #3c7656; background: #eaf4ec; }
+.movement-type-mark.is-expense { color: #9b684f; background: #fbf0e8; }
+.movement-amount { color: #46574d; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.movement-amount.is-income { color: #3c7656; }
+.movement-amount.is-expense { color: #57645c; }
 .service-mark { width: 34px; height: 34px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 11px; color: #4a705d; background: #edf4ed; font-size: 13px; font-weight: 720; }
 .subscription-price { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .subscription-price small { color: #9ba49d; font-size: 10px; }
 .subscription-actions { display: flex; flex: 0 0 auto; gap: 5px; }
 .row-action-button { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 1px solid #e5ebe5; border-radius: 9px; color: #61766a; background: #fff; font-size: 16px; cursor: pointer; }
 .row-action-button:hover:not(:disabled) { border-color: #cbdccf; color: #355b45; background: #f3f8f3; }
+.row-action-button.delete-action { color: #966b5f; }
+.row-action-button.delete-action:hover:not(:disabled) { border-color: #ead4cf; color: #954d3d; background: #fff4f1; }
 .row-action-button.archive-action { color: #916b4d; }
 .row-action-button.archive-action:hover:not(:disabled) { border-color: #ead9c7; color: #8a5630; background: #fff8ef; }
 .row-action-button.restore-action { color: #4f7959; }
@@ -103,7 +117,7 @@
 .text-button { padding: 7px 10px; border: 0; border-radius: 8px; color: #718077; background: transparent; font-size: 12px; font-weight: 650; cursor: pointer; }
 .text-button:hover:not(:disabled) { color: #304f42; background: #f1f5f1; }
 .text-button:disabled { opacity: .55; cursor: wait; }
-.subscription-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
+.subscription-form, .movement-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
 .form-field { min-width: 0; display: flex; flex-direction: column; gap: 7px; color: #68776e; font-size: 11px; font-weight: 650; }
 .form-field-wide { grid-column: span 2; }
 .form-field input, .form-field select { width: 100%; height: 41px; padding: 0 11px; border: 1px solid #e1e8e2; border-radius: 9px; outline: none; color: #35463d; background: #fff; font-size: 12px; font-weight: 500; }
@@ -121,7 +135,7 @@
   .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .metrics-grid .metric-card:last-child { grid-column: 1 / -1; min-height: 135px; }
   .content-grid { grid-template-columns: 1fr; }
-  .subscription-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .subscription-form, .movement-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 520px) {
@@ -142,10 +156,15 @@
   .subscription-search { width: 100%; }
   .subscription-filters { overflow-x: auto; }
   .subscription-filters button { flex: 1 0 auto; justify-content: center; }
-  .subscription-form { grid-template-columns: 1fr; }
+  .subscription-form, .movement-form { grid-template-columns: 1fr; }
   .form-field-wide, .form-error, .form-actions { grid-column: auto; }
   .form-actions .primary-button { width: 100%; }
   .charge-row, .subscription-row { gap: 9px; }
+  .movement-form { padding: 14px; }
+  .movement-row { gap: 8px; }
+  .movement-date { width: 73px; font-size: 10px; }
+  .movement-type-mark { width: 26px; height: 26px; }
+  .movement-amount { font-size: 10px; }
   .date-badge { width: 57px; font-size: 11px; }
   .row-amount, .subscription-price > strong { font-size: 11px; }
 }

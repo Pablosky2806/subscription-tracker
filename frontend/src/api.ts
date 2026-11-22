@@ -1,4 +1,4 @@
-import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
+import type { MoneyMovement, MoneyMovementInput, Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
 
 async function getJson<T>(path: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(path, {
@@ -24,6 +24,34 @@ export async function getDashboardData(signal: AbortSignal) {
 
 export function getUpcomingCharges(days: number, signal: AbortSignal) {
   return getJson<UpcomingCharge[]>(`/api/subscriptions/upcoming?days=${days}`, signal)
+}
+
+export function getMoneyMovements(signal: AbortSignal) {
+  return getJson<MoneyMovement[]>('/api/movements', signal)
+}
+
+export async function createMoneyMovement(input: MoneyMovementInput) {
+  const response = await fetch('/api/movements', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo guardar el movimiento (HTTP ${response.status}).`)
+  }
+  return response.json() as Promise<MoneyMovement>
+}
+
+export async function deleteMoneyMovement(id: string) {
+  const response = await fetch(`/api/movements/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Accept: 'application/json' },
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo borrar el movimiento (HTTP ${response.status}).`)
+  }
 }
 
 async function writeSubscription(path: string, method: 'POST' | 'PUT', input: SubscriptionInput) {

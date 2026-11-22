@@ -1,36 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import type { BillingPeriod, Subscription, SubscriptionInput } from './types'
+import { isoDateToDmy, parseDmyDateToIso, todayAsIsoDate } from './dateUtils'
 
 interface SubscriptionFormProps {
   initialValue?: Subscription
   onCancel: () => void
   onSave: (input: SubscriptionInput) => Promise<void>
-}
-
-function localToday() {
-  const today = new Date()
-  today.setMinutes(today.getMinutes() - today.getTimezoneOffset())
-  return today.toISOString().slice(0, 10)
-}
-
-function formatDateForInput(isoDate: string) {
-  const [year, month, day] = isoDate.split('-')
-  return `${day}/${month}/${year}`
-}
-
-function parseDateInput(value: string) {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim())
-  if (!match) return null
-
-  const [, day, month, year] = match
-  const parsed = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
-  if (
-    parsed.getUTCFullYear() !== Number(year)
-    || parsed.getUTCMonth() !== Number(month) - 1
-    || parsed.getUTCDate() !== Number(day)
-  ) return null
-
-  return `${year}-${month}-${day}`
 }
 
 function SubscriptionForm({ initialValue, onCancel, onSave }: SubscriptionFormProps) {
@@ -41,14 +16,14 @@ function SubscriptionForm({ initialValue, onCancel, onSave }: SubscriptionFormPr
   const [intervalDays, setIntervalDays] = useState(String(initialValue?.intervalDays ?? 30))
   const [category, setCategory] = useState(initialValue?.category ?? '')
   const [nextChargeDate, setNextChargeDate] = useState(
-    formatDateForInput(initialValue?.nextChargeDate ?? localToday()),
+    isoDateToDmy(initialValue?.nextChargeDate ?? todayAsIsoDate()),
   )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const parsedNextChargeDate = parseDateInput(nextChargeDate)
+    const parsedNextChargeDate = parseDmyDateToIso(nextChargeDate)
     if (!parsedNextChargeDate) {
       setError('Escribe una fecha válida con el formato DD/MM/AAAA.')
       return
