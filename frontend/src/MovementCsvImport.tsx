@@ -49,6 +49,9 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [skippedState, setSkippedState] = useState(0)
+  const [skippedExchange, setSkippedExchange] = useState(0)
+  const [revolutFormat, setRevolutFormat] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -60,13 +63,18 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
         if (file.size > 5 * 1024 * 1024) throw new Error('El archivo supera el límite de 5 MB.')
         const parsed = parseMovementCsv(await file.text())
         const seen = new Set(existingMovements.map(movementKey))
-        const preview = parsed.map(({ lineNumber, movement }) => {
+        const preview = parsed.movements.map(({ id, lineNumber, movement }) => {
           const key = movementKey(movement)
           const duplicate = seen.has(key)
           seen.add(key)
-          return { lineNumber, movement, duplicate, selected: !duplicate }
+          return { id, lineNumber, movement, duplicate, selected: !duplicate }
         })
-        if (!cancelled) setRows(preview)
+        if (!cancelled) {
+          setRows(preview)
+          setSkippedState(parsed.skippedState)
+          setSkippedExchange(parsed.skippedExchange)
+          setRevolutFormat(parsed.revolutFormat)
+        }
       } catch (fileError: unknown) {
         if (!cancelled) setError(fileError instanceof Error ? fileError.message : 'No se pudo leer el CSV.')
       } finally {
@@ -88,8 +96,8 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
     })))
   }
 
-  function toggleRow(lineNumber: number) {
-    setRows((current) => current.map((row) => row.lineNumber === lineNumber
+  function toggleRow(id: string) {
+    setRows((current) => current.map((row) => row.id === id
       ? { ...row, selected: !row.selected }
       : row))
   }
@@ -119,7 +127,7 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
         <button className="text-button" type="button" onClick={onCancel} disabled={importing}>Cancelar</button>
       </div>
       <p className="csv-import-help">
-        El archivo se lee en este navegador. Se aceptan fechas DD/MM/AAAA o AAAA-MM-DD, importes con coma o punto decimal y separadores de coma o punto y coma. Si no hay tipo, los importes negativos son gastos y los positivos ingresos.
+        El archivo se lee en este navegador. Se aceptan fechas DD/MM/AAAA o AAAA-MM-DD, importes con coma o punto decimal y separadores de coma o punto y coma. {revolutFormat ? 'En el formato de Revolut se usa la fecha de liquidación, se omiten operaciones no completadas y cambios entre divisas, y cada comisión se añade como gasto.' : 'Si no hay tipo, los importes negativos son gastos y los positivos ingresos.'}
       </p>
       <div className="csv-template-actions">
         <button className="secondary-button" type="button" onClick={downloadCsvTemplate}>Descargar plantilla CSV</button>
@@ -135,6 +143,8 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
             <span>{rows.length} movimientos encontrados</span>
             <span>{duplicateCount} posibles duplicados</span>
             <span>{selectedCount} seleccionados</span>
+            {skippedState > 0 && <span>{skippedState} pendientes o no completados omitidos</span>}
+            {skippedExchange > 0 && <span>{skippedExchange} cambios entre divisas omitidos</span>}
           </div>
           <div className="csv-selection-actions">
             <button className="text-button" type="button" onClick={() => selectAll(false)}>Seleccionar solo nuevos</button>
@@ -142,12 +152,12 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
           </div>
           <ul className="csv-preview-list" aria-label="Vista previa de movimientos">
             {rows.map((row) => (
-              <li className={`csv-preview-row${row.duplicate ? ' is-duplicate' : ''}`} key={row.lineNumber}>
+              <li className={`csv-preview-row${row.duplicate ? ' is-duplicate' : ''}`} key={row.id}>
                 <input
                   type="checkbox"
                   aria-label={`Importar fila ${row.lineNumber}: ${row.movement.description}`}
                   checked={row.selected}
-                  onChange={() => toggleRow(row.lineNumber)}
+                  onChange={() => toggleRow(row.id)}
                   disabled={importing}
                 />
                 <time dateTime={row.movement.movementDate}>{isoDateToDmy(row.movement.movementDate)}</time>

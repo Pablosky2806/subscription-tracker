@@ -2,8 +2,16 @@ import { parseDmyDateToIso } from './dateUtils'
 import type { MoneyMovementInput, MovementType } from './types'
 
 export interface ParsedCsvMovement {
+  id: string
   lineNumber: number
   movement: MoneyMovementInput
+}
+
+export interface MovementCsvResult {
+  movements: ParsedCsvMovement[]
+  skippedState: number
+  skippedExchange: number
+  revolutFormat: boolean
 }
 
 function normalizeHeader(value: string) {
@@ -104,7 +112,7 @@ function findColumn(headers: string[], aliases: string[]) {
   return headers.findIndex((header) => normalizedAliases.includes(header))
 }
 
-export function parseMovementCsv(contents: string): ParsedCsvMovement[] {
+export function parseMovementCsv(contents: string): MovementCsvResult {
   const text = contents.replace(/^\uFEFF/, '').trim()
   if (!text) throw new Error('El archivo está vacío.')
 
@@ -116,7 +124,11 @@ export function parseMovementCsv(contents: string): ParsedCsvMovement[] {
   if (rows.length < 2) throw new Error('El CSV debe incluir una cabecera y al menos un movimiento.')
 
   const headers = rows[0].map(normalizeHeader)
-  const dateColumn = findColumn(headers, ['fecha', 'date', 'transaction date', 'operation date', 'completed date', 'started date'])
+  const completedDateColumn = findColumn(headers, ['completed date', 'date completed (utc)'])
+  const startedDateColumn = findColumn(headers, ['started date', 'date started (utc)'])
+  const dateColumn = completedDateColumn >= 0 ? completedDateColumn : startedDateColumn >= 0
+    ? startedDateColumn
+    : findColumn(headers, ['fecha', 'date', 'transaction date', 'operation date'])
   const descriptionColumn = findColumn(headers, ['descripción', 'descripcion', 'description', 'concepto', 'concept', 'details', 'merchant', 'counterparty', 'payee'])
   const amountColumn = findColumn(headers, ['importe', 'amount', 'value', 'transaction amount'])
   const currencyColumn = findColumn(headers, ['moneda', 'currency', 'divisa'])
@@ -124,6 +136,10 @@ export function parseMovementCsv(contents: string): ParsedCsvMovement[] {
   const categoryColumn = findColumn(headers, ['categoría', 'categoria', 'category'])
   const debitColumn = findColumn(headers, ['debit', 'debito', 'cargo', 'debe', 'outgoing', 'money out'])
   const creditColumn = findColumn(headers, ['credit', 'credito', 'abono', 'haber', 'incoming', 'money in'])
+  const stateColumn = findColumn(headers, ['state', 'estado'])
+  const feeColumn = findColumn(headers, ['fee', 'comision', 'comisión'])
+  const bankTypeColumn = findColumn(headers, ['type', 'tipo'])
+  const revolutFormat = startedDateColumn >= 0 && completedDateColumn >= 0 && stateColumn >= 0 && bankTypeColumn >= 0
 
   if (dateColumn < 0 || descriptionColumn < 0 || currencyColumn < 0) {
     throw new Error('Faltan columnas obligatorias: Fecha, Descripción y Moneda.')
@@ -134,9 +150,19 @@ export function parseMovementCsv(contents: string): ParsedCsvMovement[] {
 
   if (rows.length - 1 > 5000) throw new Error('El archivo supera el límite de 5000 movimientos por importación.')
 
-  return rows.slice(1).map((cells, index) => {
+  let skippedState = 0
+  let skippedExchange = 0
+  const movements = rows.slice(1).flatMap((cells, index) => {
     const lineNumber = index + 2
     const cell = (column: number) => column < 0 ? '' : (cells[column] ?? '').trim()
+    if (revolutFormat && cell(stateColumn).toUpperCase() !== 'COMPLETED') {
+      skippedState += 1
+      return []
+    }
+    if (revolutFormat && normalizeHeader(cell(bankTypeColumn)) === 'exchange') {
+      skippedExchange += 1
+      return []
+    }
     const movementDate = parseDate(cell(dateColumn))
     if (!movementDate) throw new Error(`Fila ${lineNumber}: la fecha no es válida.`)
 
@@ -163,16 +189,35 @@ export function parseMovementCsv(contents: string): ParsedCsvMovement[] {
     const category = cell(categoryColumn) || 'Otros'
     if (category.length > 80) throw new Error(`Fila ${lineNumber}: la categoría supera los 80 caracteres.`)
 
-    return {
-      lineNumber,
-      movement: {
+    const movement: MoneyMovementInput = {
         description,
         amount: selectedAmount.amount,
         currency,
         type,
         category,
         movementDate,
-      },
     }
+    const result: ParsedCsvMovement[] = [{ id: `${lineNumber}-main`, lineNumber, movement }]
+    const fee = feeColumn < 0 || !cell(feeColumn) ? null : parseAmount(cell(feeColumn))
+    if (fee) {
+      result.push({
+        id: `${lineNumber}-fee`,
+        lineNumber,
+        movement: {
+          ...movement,
+          description: `${description} (comisión)`.slice(0, 120),
+          amount: fee.amount,
+          type: 'EXPENSE',
+          category: 'Comisiones bancarias',
+        },
+      })
+    }
+    return result
   })
+
+  if (movements.length > 5000) {
+    throw new Error('El archivo genera más de 5000 movimientos al incluir comisiones. Divide la importación en varios CSV.')
+  }
+
+  return { movements, skippedState, skippedExchange, revolutFormat }
 }
