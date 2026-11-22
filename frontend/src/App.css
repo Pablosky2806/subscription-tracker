@@ -102,6 +102,16 @@
 .csv-import-footer { display: flex; justify-content: flex-end; padding-top: 13px; }
 .csv-import-error { margin: 10px 0; color: #a44f3c; font-size: 12px; }
 .movement-analytics { margin: 0 0 18px; padding: 17px; border: 1px solid #edf1ed; border-radius: 14px; background: #fbfcfa; }
+.linked-charge-panel { margin: 0 0 18px; padding: 17px; border: 1px solid #edf1ed; border-radius: 14px; background: #fff; }
+.linked-charge-panel .monthly-summary-heading { margin-bottom: 8px; }
+.linked-charge-panel h3 { margin: 0; color: #34463c; font-size: 14px; font-weight: 680; }
+.linked-charge-month { color: #7e8c82; font-size: 11px; text-transform: capitalize; }
+.linked-charge-list { padding: 0; margin: 0; list-style: none; }
+.linked-charge-list li { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #f0f2ef; }
+.linked-charge-service { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.linked-charge-service strong { overflow: hidden; color: #394a40; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.linked-charge-service small { color: #929d95; font-size: 10px; }
+.linked-charge-total { color: #91634b; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .monthly-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 15px; }
 .monthly-summary-heading .eyebrow { margin-bottom: 4px; }
 .monthly-summary-heading h3 { margin: 0; color: #34463c; font-size: 14px; font-weight: 680; }

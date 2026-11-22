@@ -12,6 +12,7 @@ Aplicación self-hosted para registrar suscripciones y consultar cuánto cuestan
 - Registrar gastos e ingresos manualmente con fecha, concepto, importe y categoría.
 - Editar y borrar movimientos ya registrados.
 - Vincular un movimiento con una suscripción para identificar el cobro real de ese servicio.
+- Consultar los cargos reales vinculados a suscripciones en el resumen del mes.
 - Buscar y filtrar movimientos por mes, tipo y categoría.
 - Importar gastos e ingresos desde CSV con vista previa y detección de posibles duplicados; el archivo se procesa localmente en el navegador.
 - Exportar e importar copias JSON de suscripciones y movimientos; la restauración conserva los datos existentes y omite registros con el mismo identificador. También admite copias antiguas de la versión 1, que solo contenían suscripciones.

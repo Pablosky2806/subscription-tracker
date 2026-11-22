@@ -18,6 +18,14 @@ interface CurrencyMonthSummary {
   expenseCategories: CategoryAmount[]
 }
 
+interface LinkedChargeSummary {
+  subscriptionId: string
+  name: string
+  currency: string
+  count: number
+  total: number
+}
+
 function formatMoney(amount: number, currency: string) {
   try {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(amount)
@@ -61,6 +69,33 @@ function summarizeMonth(movements: MoneyMovement[], month: string): CurrencyMont
     incomeCategories: toCategoryAmounts(totals.incomeCategories),
     expenseCategories: toCategoryAmounts(totals.expenseCategories),
   })).sort((first, second) => first.currency.localeCompare(second.currency))
+}
+
+function summarizeLinkedCharges(
+  movements: MoneyMovement[],
+  month: string,
+  subscriptions: Subscription[],
+): LinkedChargeSummary[] {
+  const subscriptionNames = new Map(subscriptions.map((subscription) => [subscription.id, subscription.name]))
+  const groups = new Map<string, LinkedChargeSummary>()
+
+  for (const movement of movements) {
+    if (!movement.movementDate.startsWith(month) || movement.type !== 'EXPENSE' || !movement.subscriptionId) continue
+    const key = `${movement.subscriptionId}|${movement.currency}`
+    const group = groups.get(key) ?? {
+      subscriptionId: movement.subscriptionId,
+      name: subscriptionNames.get(movement.subscriptionId) ?? 'Suscripción archivada',
+      currency: movement.currency,
+      count: 0,
+      total: 0,
+    }
+    group.count += 1
+    group.total += movement.amount
+    groups.set(key, group)
+  }
+
+  return Array.from(groups.values()).sort((first, second) =>
+    first.currency.localeCompare(second.currency) || second.total - first.total || first.name.localeCompare(second.name, 'es'))
 }
 
 function changeMonth(month: string, amount: number) {
@@ -128,6 +163,7 @@ function MovementsPanel({ refreshKey = 0, subscriptions = [] }: { refreshKey?: n
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL')
   const [categoryFilter, setCategoryFilter] = useState('')
   const monthlySummaries = summarizeMonth(movements, selectedMonth)
+  const linkedChargeSummaries = summarizeLinkedCharges(movements, selectedMonth, subscriptions)
   const categories = Array.from(new Set(movements.map((movement) => movement.category)))
     .sort((first, second) => first.localeCompare(second, 'es'))
   const subscriptionsById = new Map(subscriptions.map((subscription) => [subscription.id, subscription]))
@@ -321,6 +357,31 @@ function MovementsPanel({ refreshKey = 0, subscriptions = [] }: { refreshKey?: n
               )
             })}
           </div>
+        )}
+      </section>
+
+      <section className="linked-charge-panel" aria-labelledby="linked-charges-title">
+        <div className="monthly-summary-heading">
+          <div>
+            <p className="eyebrow">PAGOS REALES</p>
+            <h3 id="linked-charges-title">Cargos vinculados a suscripciones</h3>
+          </div>
+          <span className="linked-charge-month">{monthLabel(selectedMonth)}</span>
+        </div>
+        {linkedChargeSummaries.length === 0 ? (
+          <p className="monthly-no-data">No hay cargos vinculados en este mes. Puedes asociar un movimiento al editarlo o durante la importación CSV.</p>
+        ) : (
+          <ul className="linked-charge-list">
+            {linkedChargeSummaries.map((charge) => (
+              <li key={`${charge.subscriptionId}-${charge.currency}`}>
+                <span className="linked-charge-service">
+                  <strong>{charge.name}</strong>
+                  <small>{charge.count} {charge.count === 1 ? 'cargo real' : 'cargos reales'} · {charge.currency}</small>
+                </span>
+                <strong className="linked-charge-total">{formatMoney(charge.total, charge.currency)}</strong>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
