@@ -23,6 +23,22 @@ function formatDate(date: string) {
   }).format(new Date(`${date}T00:00:00`))
 }
 
+function downloadBackup(subscriptions: Subscription[]) {
+  const backup = {
+    format: 'subscription-tracker-backup',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    subscriptions,
+  }
+  const file = new Blob([`${JSON.stringify(backup, null, 2)}\n`], { type: 'application/json' })
+  const url = URL.createObjectURL(file)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `suscripciones-backup-${new Date().toISOString().slice(0, 10)}.json`
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 function relativeChargeDate(days: number) {
   if (days === 0) return 'Hoy'
   if (days === 1) return 'Mañana'
@@ -323,13 +339,18 @@ function App() {
           <div className="heading-actions">
             <div className="today-label">{new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date())}</div>
             {!formOpen && (
-              <button className="primary-button" type="button" onClick={() => {
-                setEditingSubscription(null)
-                setNotice(null)
-                setFormOpen(true)
-              }}>
-                <span aria-hidden="true">+</span> Añadir suscripción
-              </button>
+              <div className="dashboard-actions">
+                <button className="secondary-button" type="button" onClick={() => downloadBackup(subscriptions)}>
+                  Exportar copia
+                </button>
+                <button className="primary-button" type="button" onClick={() => {
+                  setEditingSubscription(null)
+                  setNotice(null)
+                  setFormOpen(true)
+                }}>
+                  <span aria-hidden="true">+</span> Añadir suscripción
+                </button>
+              </div>
             )}
           </div>
         </section>
