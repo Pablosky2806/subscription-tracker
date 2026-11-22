@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { archiveSubscription, createSubscription, getDashboardData, importSubscriptionBackup, restoreSubscription, updateSubscription } from './api'
+import { archiveSubscription, createSubscription, getDashboardData, getUpcomingCharges, importSubscriptionBackup, restoreSubscription, updateSubscription } from './api'
 import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
 import SubscriptionForm from './SubscriptionForm'
 import './App.css'
@@ -223,6 +223,8 @@ function App() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [summary, setSummary] = useState<Summary>({ currencies: [] })
   const [upcomingCharges, setUpcomingCharges] = useState<UpcomingCharge[]>([])
+  const [upcomingDays, setUpcomingDays] = useState<30 | 60 | 90>(30)
+  const [upcomingLoading, setUpcomingLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -253,10 +255,14 @@ function App() {
   const archivedSubscriptionCount = subscriptions.length - activeSubscriptionCount
 
   async function refreshDashboard() {
-    const data = await getDashboardData(new AbortController().signal)
+    const signal = new AbortController().signal
+    const [data, charges] = await Promise.all([
+      getDashboardData(signal),
+      getUpcomingCharges(upcomingDays, signal),
+    ])
     setSubscriptions(data.subscriptions)
     setSummary(data.summary)
-    setUpcomingCharges(data.upcomingCharges)
+    setUpcomingCharges(charges)
   }
 
   async function handleBackupFile(event: ChangeEvent<HTMLInputElement>) {
@@ -363,7 +369,6 @@ function App() {
       .then((data) => {
         setSubscriptions(data.subscriptions)
         setSummary(data.summary)
-        setUpcomingCharges(data.upcomingCharges)
       })
       .catch((loadError: unknown) => {
         if (!controller.signal.aborted) {
@@ -376,6 +381,24 @@ function App() {
 
     return () => controller.abort()
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setUpcomingLoading(true)
+
+    getUpcomingCharges(upcomingDays, controller.signal)
+      .then(setUpcomingCharges)
+      .catch((loadError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los cobros.')
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setUpcomingLoading(false)
+      })
+
+    return () => controller.abort()
+  }, [upcomingDays])
 
   return (
     <div className="app-shell">
@@ -479,9 +502,20 @@ function App() {
                 <p className="eyebrow">CALENDARIO</p>
                 <h2>Próximos cobros</h2>
               </div>
-              <span className="panel-note">30 días</span>
+              <label className="horizon-control">
+                <span className="visually-hidden">Mostrar próximos cobros de</span>
+                <select
+                  className="horizon-select"
+                  value={upcomingDays}
+                  onChange={(event) => setUpcomingDays(Number(event.target.value) as 30 | 60 | 90)}
+                >
+                  <option value={30}>30 días</option>
+                  <option value={60}>60 días</option>
+                  <option value={90}>90 días</option>
+                </select>
+              </label>
             </div>
-            {loading ? <p className="loading-message">Cargando cobros…</p> : <UpcomingList charges={upcomingCharges} />}
+            {upcomingLoading ? <p className="loading-message">Cargando cobros…</p> : <UpcomingList charges={upcomingCharges} />}
           </article>
 
           <article className="panel category-panel">

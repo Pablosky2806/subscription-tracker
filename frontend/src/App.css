@@ -37,6 +37,9 @@
 .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
 .panel-heading .eyebrow { margin-bottom: 5px; }
 .panel-heading h2 { margin: 0; color: #293a33; font-size: 17px; font-weight: 690; letter-spacing: -.35px; }
+.horizon-control { position: relative; display: inline-flex; flex: 0 0 auto; }
+.horizon-select { height: 32px; padding: 0 25px 0 10px; border: 1px solid #e1e8e2; border-radius: 99px; color: #63766a; background: #fff; font-size: 11px; font-weight: 650; cursor: pointer; }
+.horizon-select:focus { border-color: #9dbba3; outline: 0; box-shadow: 0 0 0 3px rgba(76,125,93,.1); }
 .panel-note, .count-pill { padding: 6px 10px; border-radius: 99px; color: #78867e; background: #f2f5f1; font-size: 11px; font-weight: 650; }
 .count-pill { min-width: 28px; text-align: center; }
 .subscription-tools { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: -2px 0 12px; }

@@ -14,13 +14,16 @@ async function getJson<T>(path: string, signal: AbortSignal): Promise<T> {
 }
 
 export async function getDashboardData(signal: AbortSignal) {
-  const [subscriptions, summary, upcomingCharges] = await Promise.all([
+  const [subscriptions, summary] = await Promise.all([
     getJson<Subscription[]>('/api/subscriptions', signal),
     getJson<Summary>('/api/summary', signal),
-    getJson<UpcomingCharge[]>('/api/subscriptions/upcoming', signal),
   ])
 
-  return { subscriptions, summary, upcomingCharges }
+  return { subscriptions, summary }
+}
+
+export function getUpcomingCharges(days: number, signal: AbortSignal) {
+  return getJson<UpcomingCharge[]>(`/api/subscriptions/upcoming?days=${days}`, signal)
 }
 
 async function writeSubscription(path: string, method: 'POST' | 'PUT', input: SubscriptionInput) {
