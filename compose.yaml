@@ -1,4 +1,18 @@
 services:
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-subscription_tracker}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-subscription_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-change-me}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:18.7-alpine3.24
     restart: unless-stopped

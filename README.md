@@ -15,7 +15,7 @@ Aplicación self-hosted para registrar suscripciones y consultar cuánto cuestan
 - **Backend:** Spring Boot, API REST y lógica de negocio.
 - **Frontend:** React con TypeScript; se compila y Spring Boot sirve los archivos estáticos.
 - **Base de datos:** PostgreSQL en un contenedor separado.
-- **Ejecución local:** Docker Compose para levantar la app y PostgreSQL.
+- **Ejecución local:** Docker Compose levanta la app y PostgreSQL en contenedores separados.
 - **Distribución:** una imagen Docker para la aplicación (backend + frontend compilado).
 
 ## Ruta de aprendizaje
@@ -32,7 +32,36 @@ En cada etapa explicaremos las decisiones y el código antes de avanzar a la sig
 
 ## Desarrollo local
 
-La API vive en `backend/`. Requiere Java 25, Maven y Docker Desktop con el motor iniciado.
+La forma habitual de iniciar la aplicación completa es con Docker Desktop. Compose construye una imagen para Spring Boot más el frontend React compilado, y ejecuta PostgreSQL en un contenedor separado:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build -d
+```
+
+Abre `http://localhost:8080`. Si los puertos 5432 o 8080 ya están ocupados, cambia `POSTGRES_PORT` o `APP_PORT` en `.env` (por ejemplo, 5433 y 8081). Para ver el estado de los contenedores:
+
+```powershell
+docker compose ps
+```
+
+Para consultar los logs de la aplicación:
+
+```powershell
+docker compose logs -f app
+```
+
+Para detener los contenedores sin eliminar los datos:
+
+```powershell
+docker compose down
+```
+
+PostgreSQL guarda sus datos en el volumen `postgres_data`. `docker compose down -v` también borraría ese volumen y los datos almacenados.
+
+### Desarrollo con recarga rápida
+
+Para modificar el backend o el frontend sin reconstruir la imagen, se pueden ejecutar por separado. Este modo requiere Java 25, Maven, Node.js y Docker Desktop con el motor iniciado:
 
 ```powershell
 Copy-Item .env.example .env
