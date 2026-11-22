@@ -337,6 +337,7 @@ function MovementsPanel({ refreshKey = 0, subscriptions = [] }: { refreshKey?: n
       {csvFile && <MovementCsvImport
         file={csvFile}
         existingMovements={movements}
+        subscriptions={subscriptions}
         onCancel={() => setCsvFile(null)}
         onComplete={handleImportComplete}
       />}

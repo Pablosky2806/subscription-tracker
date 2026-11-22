@@ -91,6 +91,9 @@
 .csv-preview-description { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .csv-preview-description strong { overflow: hidden; color: #394a40; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .csv-preview-description small { color: #929d95; font-size: 10px; }
+.csv-subscription-choice { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.csv-subscription-choice select { width: min(100%, 250px); height: 29px; padding: 0 8px; border: 1px solid #e1e8e2; border-radius: 7px; color: #506357; background: #fff; font-size: 10px; }
+.csv-subscription-choice .csv-subscription-suggestion { color: #547962; }
 .csv-preview-row > strong { font-size: 11px; white-space: nowrap; }
 .csv-preview-row .is-income { color: #3c7656; }
 .csv-preview-row .is-expense { color: #91634b; }

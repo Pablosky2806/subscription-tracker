@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react'
 import { importMoneyMovements } from './api'
 import { isoDateToDmy, todayAsIsoDate } from './dateUtils'
 import { parseMovementCsv, type ParsedCsvMovement } from './movementCsv'
-import type { MoneyMovement, MoneyMovementInput } from './types'
+import type { MoneyMovement, MoneyMovementInput, Subscription } from './types'
 
 interface PreviewRow extends ParsedCsvMovement {
   duplicate: boolean
   selected: boolean
+  suggestedSubscriptionId: string | null
 }
 
 interface MovementCsvImportProps {
   file: File
   existingMovements: MoneyMovement[]
+  subscriptions: Subscription[]
   onCancel: () => void
   onComplete: (count: number) => Promise<void>
 }
@@ -44,7 +46,25 @@ function downloadCsvTemplate() {
   URL.revokeObjectURL(url)
 }
 
-function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: MovementCsvImportProps) {
+function normalizeMatch(value: string) {
+  return value.trim().toLocaleLowerCase('es').normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '')
+}
+
+function suggestSubscription(description: string, subscriptions: Subscription[]) {
+  const normalizedDescription = normalizeMatch(description)
+  const matches = subscriptions
+    .map((subscription) => ({ subscription, name: normalizeMatch(subscription.name) }))
+    .filter(({ name }) => name.length >= 3 && normalizedDescription.includes(name))
+    .sort((first, second) => second.name.length - first.name.length
+      || Number(second.subscription.active) - Number(first.subscription.active))
+  if (matches.length > 1
+    && matches[0].name.length === matches[1].name.length
+    && matches[0].subscription.active === matches[1].subscription.active) return null
+  return matches[0]?.subscription ?? null
+}
+
+function MovementCsvImport({ file, existingMovements, subscriptions, onCancel, onComplete }: MovementCsvImportProps) {
   const [rows, setRows] = useState<PreviewRow[]>([])
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState(false)
@@ -67,7 +87,8 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
           const key = movementKey(movement)
           const duplicate = seen.has(key)
           seen.add(key)
-          return { id, lineNumber, movement, duplicate, selected: !duplicate }
+          const suggestion = suggestSubscription(movement.description, subscriptions)
+          return { id, lineNumber, movement, duplicate, selected: !duplicate, suggestedSubscriptionId: suggestion?.id ?? null }
         })
         if (!cancelled) {
           setRows(preview)
@@ -84,7 +105,7 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
 
     void readFile()
     return () => { cancelled = true }
-  }, [existingMovements, file])
+  }, [existingMovements, file, subscriptions])
 
   const selectedCount = rows.filter((row) => row.selected).length
   const duplicateCount = rows.filter((row) => row.duplicate).length
@@ -99,6 +120,12 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
   function toggleRow(id: string) {
     setRows((current) => current.map((row) => row.id === id
       ? { ...row, selected: !row.selected }
+      : row))
+  }
+
+  function selectSubscription(id: string, subscriptionId: string) {
+    setRows((current) => current.map((row) => row.id === id
+      ? { ...row, movement: { ...row.movement, subscriptionId: subscriptionId || null } }
       : row))
   }
 
@@ -127,7 +154,7 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
         <button className="text-button" type="button" onClick={onCancel} disabled={importing}>Cancelar</button>
       </div>
       <p className="csv-import-help">
-        El archivo se lee en este navegador. Se aceptan fechas DD/MM/AAAA o AAAA-MM-DD, importes con coma o punto decimal y separadores de coma o punto y coma. {revolutFormat ? 'En el formato de Revolut se usa la fecha de liquidación, se omiten operaciones no completadas y cambios entre divisas, y cada comisión se añade como gasto.' : 'Si no hay tipo, los importes negativos son gastos y los positivos ingresos.'}
+        El archivo se lee en este navegador. Se aceptan fechas DD/MM/AAAA o AAAA-MM-DD, importes con coma o punto decimal y separadores de coma o punto y coma. {revolutFormat ? 'En el formato de Revolut se usa la fecha de liquidación, se omiten operaciones no completadas y cambios entre divisas, y cada comisión se añade como gasto.' : 'Si no hay tipo, los importes negativos son gastos y los positivos ingresos.'} Las suscripciones sugeridas solo se vinculan si las seleccionas aquí.
       </p>
       <div className="csv-template-actions">
         <button className="secondary-button" type="button" onClick={downloadCsvTemplate}>Descargar plantilla CSV</button>
@@ -164,6 +191,26 @@ function MovementCsvImport({ file, existingMovements, onCancel, onComplete }: Mo
                 <span className="csv-preview-description">
                   <strong>{row.movement.description}</strong>
                   <small>{row.movement.category} · {row.movement.type === 'INCOME' ? 'Ingreso' : 'Gasto'}</small>
+                  <span className="csv-subscription-choice">
+                    <small className="csv-subscription-suggestion">
+                      {row.suggestedSubscriptionId
+                        ? `Sugerencia: ${subscriptions.find((item) => item.id === row.suggestedSubscriptionId)?.name}`
+                        : 'Vincular suscripción (opcional)'}
+                    </small>
+                    <select
+                      aria-label={`Suscripción para ${row.movement.description}`}
+                      value={row.movement.subscriptionId ?? ''}
+                      onChange={(event) => selectSubscription(row.id, event.target.value)}
+                      disabled={importing}
+                    >
+                      <option value="">Sin vincular</option>
+                      {subscriptions.map((subscription) => (
+                        <option key={subscription.id} value={subscription.id}>
+                          {subscription.name}{subscription.active ? '' : ' (archivada)'}
+                        </option>
+                      ))}
+                    </select>
+                  </span>
                 </span>
                 <strong className={row.movement.type === 'INCOME' ? 'is-income' : 'is-expense'}>
                   {row.movement.type === 'INCOME' ? '+' : '−'}{formatMoney(row.movement.amount, row.movement.currency)}
