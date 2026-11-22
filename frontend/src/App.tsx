@@ -229,7 +229,9 @@ function App() {
   const [summary, setSummary] = useState<Summary>({ currencies: [] })
   const [upcomingCharges, setUpcomingCharges] = useState<UpcomingCharge[]>([])
   const [upcomingDays, setUpcomingDays] = useState<30 | 60 | 90>(30)
-  const [upcomingLoading, setUpcomingLoading] = useState(true)
+  const [upcomingLoadState, setUpcomingLoadState] = useState<{ days: 30 | 60 | 90; loading: boolean }>({ days: 30, loading: true })
+  const upcomingLoading = upcomingLoadState.days !== upcomingDays || upcomingLoadState.loading
+  const [todayLabel] = useState(() => new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date()))
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -406,7 +408,6 @@ function App() {
 
   useEffect(() => {
     const controller = new AbortController()
-    setUpcomingLoading(true)
 
     getUpcomingCharges(upcomingDays, controller.signal)
       .then(setUpcomingCharges)
@@ -416,7 +417,7 @@ function App() {
         }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setUpcomingLoading(false)
+        if (!controller.signal.aborted) setUpcomingLoadState({ days: upcomingDays, loading: false })
       })
 
     return () => controller.abort()
@@ -439,7 +440,7 @@ function App() {
             <p className="page-subtitle">Tus pagos recurrentes, claros de un vistazo.</p>
           </div>
           <div className="heading-actions">
-            <div className="today-label">{new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date())}</div>
+            <div className="today-label">{todayLabel}</div>
             {!formOpen && (
               <div className="dashboard-actions">
                 <input
