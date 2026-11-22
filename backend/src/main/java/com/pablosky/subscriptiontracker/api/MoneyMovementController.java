@@ -3,6 +3,7 @@ package com.pablosky.subscriptiontracker.api;
 import com.pablosky.subscriptiontracker.persistence.MoneyMovementEntity;
 import com.pablosky.subscriptiontracker.persistence.MoneyMovementRepository;
 import jakarta.validation.Valid;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,6 +48,18 @@ public class MoneyMovementController {
         return ResponseEntity
                 .created(URI.create("/api/movements/" + created.id()))
                 .body(MoneyMovementResponse.from(created));
+    }
+
+    @PostMapping("/import")
+    @Transactional
+    public MoneyMovementImportResponse importMovements(
+            @Valid @RequestBody MoneyMovementImportRequest request
+    ) {
+        var entities = request.movements().stream()
+                .map(movement -> new MoneyMovementEntity(movement.toDomain(UUID.randomUUID())))
+                .toList();
+        movementRepository.saveAll(entities);
+        return new MoneyMovementImportResponse(entities.size());
     }
 
     @DeleteMapping("/{id}")

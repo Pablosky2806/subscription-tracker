@@ -43,6 +43,20 @@ export async function createMoneyMovement(input: MoneyMovementInput) {
   return response.json() as Promise<MoneyMovement>
 }
 
+export async function importMoneyMovements(movements: MoneyMovementInput[]): Promise<number> {
+  const response = await fetch('/api/movements/import', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ movements }),
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudieron importar los movimientos (HTTP ${response.status}).`)
+  }
+  const result = await response.json() as { imported: number }
+  return result.imported
+}
+
 export async function deleteMoneyMovement(id: string) {
   const response = await fetch(`/api/movements/${encodeURIComponent(id)}`, {
     method: 'DELETE',

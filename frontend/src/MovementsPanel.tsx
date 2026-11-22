@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createMoneyMovement, deleteMoneyMovement, getMoneyMovements } from './api'
 import { isoDateToDmy, todayAsIsoDate } from './dateUtils'
 import type { MoneyMovement, MoneyMovementInput } from './types'
 import MovementForm from './MovementForm'
+import MovementCsvImport from './MovementCsvImport'
 
 interface CategoryAmount {
   category: string
@@ -114,6 +115,9 @@ function MovementsPanel() {
   const [movements, setMovements] = useState<MoneyMovement[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [importBusy, setImportBusy] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -164,6 +168,21 @@ function MovementsPanel() {
     }
   }
 
+  async function handleImportComplete(count: number) {
+    setImportBusy(true)
+    try {
+      const refreshed = await getMoneyMovements(new AbortController().signal)
+      setMovements(refreshed)
+      setCsvFile(null)
+      setNotice(`${count} movimientos importados.`)
+      setError(null)
+    } catch (loadError: unknown) {
+      setError(loadError instanceof Error ? loadError.message : 'Se importaron los movimientos, pero no se pudo actualizar la lista.')
+    } finally {
+      setImportBusy(false)
+    }
+  }
+
   return (
     <section className="panel movements-panel" aria-labelledby="movements-title">
       <div className="panel-heading">
@@ -173,6 +192,27 @@ function MovementsPanel() {
         </div>
         <div className="movement-heading-actions">
           {!loading && <span className="count-pill">{movements.length}</span>}
+          <input
+            ref={fileInputRef}
+            className="visually-hidden"
+            type="file"
+            accept=".csv,text/csv"
+            aria-label="Seleccionar archivo CSV de movimientos"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0]
+              event.currentTarget.value = ''
+              if (!file) return
+              setNotice(null)
+              setError(null)
+              setFormOpen(false)
+              setCsvFile(file)
+            }}
+          />
+          {!formOpen && !csvFile && (
+            <button className="secondary-button" type="button" disabled={loading || importBusy} onClick={() => fileInputRef.current?.click()}>
+              Importar CSV
+            </button>
+          )}
           {!formOpen && (
             <button className="primary-button" type="button" onClick={() => {
               setError(null)
@@ -253,6 +293,12 @@ function MovementsPanel() {
       </section>
 
       {formOpen && <MovementForm onCancel={() => setFormOpen(false)} onSave={handleSave} />}
+      {csvFile && <MovementCsvImport
+        file={csvFile}
+        existingMovements={movements}
+        onCancel={() => setCsvFile(null)}
+        onComplete={handleImportComplete}
+      />}
 
       {loading ? <p className="loading-message">Cargando movimientos…</p> : movements.length === 0 ? (
         <div className="empty-state compact-empty">
