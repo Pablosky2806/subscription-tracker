@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react'
 import { createMoneyMovement, deleteMoneyMovement, getMoneyMovements } from './api'
-import { isoDateToDmy } from './dateUtils'
+import { isoDateToDmy, todayAsIsoDate } from './dateUtils'
 import type { MoneyMovement, MoneyMovementInput } from './types'
 import MovementForm from './MovementForm'
+
+interface CategoryAmount {
+  category: string
+  amount: number
+}
+
+interface CurrencyMonthSummary {
+  currency: string
+  income: number
+  expense: number
+  incomeCategories: CategoryAmount[]
+  expenseCategories: CategoryAmount[]
+}
 
 function formatMoney(amount: number, currency: string) {
   try {
@@ -12,6 +25,91 @@ function formatMoney(amount: number, currency: string) {
   }
 }
 
+function summarizeMonth(movements: MoneyMovement[], month: string): CurrencyMonthSummary[] {
+  const groups = new Map<string, {
+    income: number
+    expense: number
+    incomeCategories: Map<string, number>
+    expenseCategories: Map<string, number>
+  }>()
+
+  for (const movement of movements) {
+    if (!movement.movementDate.startsWith(month)) continue
+    const group = groups.get(movement.currency) ?? {
+      income: 0,
+      expense: 0,
+      incomeCategories: new Map<string, number>(),
+      expenseCategories: new Map<string, number>(),
+    }
+    const categories = movement.type === 'INCOME' ? group.incomeCategories : group.expenseCategories
+    categories.set(movement.category, (categories.get(movement.category) ?? 0) + movement.amount)
+    if (movement.type === 'INCOME') group.income += movement.amount
+    else group.expense += movement.amount
+    groups.set(movement.currency, group)
+  }
+
+  const toCategoryAmounts = (categories: Map<string, number>) => Array.from(categories, ([category, amount]) => ({
+    category,
+    amount,
+  })).sort((first, second) => second.amount - first.amount)
+
+  return Array.from(groups, ([currency, totals]) => ({
+    currency,
+    income: totals.income,
+    expense: totals.expense,
+    incomeCategories: toCategoryAmounts(totals.incomeCategories),
+    expenseCategories: toCategoryAmounts(totals.expenseCategories),
+  })).sort((first, second) => first.currency.localeCompare(second.currency))
+}
+
+function changeMonth(month: string, amount: number) {
+  const [year, monthNumber] = month.split('-').map(Number)
+  const date = new Date(year, monthNumber - 1 + amount, 1)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function monthLabel(month: string) {
+  const [year, monthNumber] = month.split('-').map(Number)
+  return new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
+    .format(new Date(year, monthNumber - 1, 1))
+}
+
+function CategoryBars({
+  title,
+  categories,
+  currency,
+  tone,
+}: {
+  title: string
+  categories: CategoryAmount[]
+  currency: string
+  tone: 'income' | 'expense'
+}) {
+  if (categories.length === 0) {
+    return <div className="movement-category-chart"><h4>{title}</h4><p className="monthly-no-data">Sin movimientos este mes.</p></div>
+  }
+
+  const maximum = Math.max(...categories.map((item) => item.amount))
+  return (
+    <div className="movement-category-chart">
+      <h4>{title}</h4>
+      <ul className="movement-category-list">
+        {categories.map((item) => (
+          <li key={item.category}>
+            <div className="category-line">
+              <span>{item.category}</span>
+              <strong>{formatMoney(item.amount, currency)}</strong>
+            </div>
+            <div className={`progress-track movement-progress ${tone}`} aria-hidden="true">
+              <span style={{ width: `${(item.amount / maximum) * 100}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 function MovementsPanel() {
   const [movements, setMovements] = useState<MoneyMovement[]>([])
   const [loading, setLoading] = useState(true)
@@ -19,6 +117,8 @@ function MovementsPanel() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState(() => todayAsIsoDate().slice(0, 7))
+  const monthlySummaries = summarizeMonth(movements, selectedMonth)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -87,6 +187,70 @@ function MovementsPanel() {
 
       {notice && <div className="success-banner" role="status">{notice}</div>}
       {error && <div className="error-banner" role="alert"><span>{error}</span></div>}
+
+      <section className="movement-analytics" aria-labelledby="monthly-summary-title">
+        <div className="monthly-summary-heading">
+          <div>
+            <p className="eyebrow">RESUMEN</p>
+            <h3 id="monthly-summary-title">Ingresos y gastos</h3>
+          </div>
+          <div className="month-navigation" aria-label="Seleccionar mes">
+            <button type="button" aria-label="Mes anterior" onClick={() => setSelectedMonth((month) => changeMonth(month, -1))}>‹</button>
+            <span>{monthLabel(selectedMonth)}</span>
+            <button type="button" aria-label="Mes siguiente" onClick={() => setSelectedMonth((month) => changeMonth(month, 1))}>›</button>
+          </div>
+        </div>
+
+        {loading ? <p className="loading-message">Calculando resumen…</p> : monthlySummaries.length === 0 ? (
+          <p className="monthly-no-data">No hay movimientos en {monthLabel(selectedMonth)}.</p>
+        ) : (
+          <div className="monthly-currency-groups">
+            {monthlySummaries.map((summary) => {
+              const net = summary.income - summary.expense
+              const largestTotal = Math.max(summary.income, summary.expense, 1)
+              return (
+                <div className="monthly-currency-group" key={summary.currency}>
+                  {monthlySummaries.length > 1 && <span className="currency-label">{summary.currency}</span>}
+                  <div className="monthly-flow-cards">
+                    <article className="monthly-flow-card income">
+                      <span>Ingresos</span>
+                      <strong>{formatMoney(summary.income, summary.currency)}</strong>
+                    </article>
+                    <article className="monthly-flow-card expense">
+                      <span>Gastos</span>
+                      <strong>{formatMoney(summary.expense, summary.currency)}</strong>
+                    </article>
+                    <article className="monthly-flow-card balance">
+                      <span>Diferencia</span>
+                      <strong>{formatMoney(net, summary.currency)}</strong>
+                    </article>
+                  </div>
+                  <div className="monthly-flow-chart" aria-label={`Comparación de ingresos y gastos en ${summary.currency}`}>
+                    <div className="monthly-flow-row">
+                      <span>Ingresos</span>
+                      <div className="progress-track movement-progress income" aria-hidden="true">
+                        <span style={{ width: `${(summary.income / largestTotal) * 100}%` }} />
+                      </div>
+                      <strong>{formatMoney(summary.income, summary.currency)}</strong>
+                    </div>
+                    <div className="monthly-flow-row">
+                      <span>Gastos</span>
+                      <div className="progress-track movement-progress expense" aria-hidden="true">
+                        <span style={{ width: `${(summary.expense / largestTotal) * 100}%` }} />
+                      </div>
+                      <strong>{formatMoney(summary.expense, summary.currency)}</strong>
+                    </div>
+                  </div>
+                  <div className="movement-category-breakdown">
+                    <CategoryBars title="Ingresos por categoría" categories={summary.incomeCategories} currency={summary.currency} tone="income" />
+                    <CategoryBars title="Gastos por categoría" categories={summary.expenseCategories} currency={summary.currency} tone="expense" />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
 
       {formOpen && <MovementForm onCancel={() => setFormOpen(false)} onSave={handleSave} />}
 

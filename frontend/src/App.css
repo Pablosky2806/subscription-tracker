@@ -75,6 +75,33 @@
 .subscription-row { min-height: 73px; }
 .movements-panel { margin-top: 18px; }
 .movement-heading-actions { display: flex; align-items: center; gap: 9px; }
+.movement-analytics { margin: 0 0 18px; padding: 17px; border: 1px solid #edf1ed; border-radius: 14px; background: #fbfcfa; }
+.monthly-summary-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 15px; }
+.monthly-summary-heading .eyebrow { margin-bottom: 4px; }
+.monthly-summary-heading h3 { margin: 0; color: #34463c; font-size: 14px; font-weight: 680; }
+.month-navigation { display: flex; align-items: center; gap: 9px; color: #64746a; font-size: 12px; font-weight: 650; text-transform: capitalize; }
+.month-navigation button { width: 28px; height: 28px; display: grid; place-items: center; padding: 0 0 2px; border: 1px solid #e1e8e2; border-radius: 8px; color: #5a7662; background: #fff; font-size: 19px; line-height: 1; cursor: pointer; }
+.month-navigation button:hover { border-color: #b9cfbd; background: #f3f8f3; }
+.monthly-no-data { margin: 0; padding: 8px 0; color: #89968d; font-size: 12px; }
+.monthly-currency-groups { display: flex; flex-direction: column; gap: 18px; }
+.monthly-currency-group { display: flex; flex-direction: column; gap: 13px; }
+.monthly-flow-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.monthly-flow-card { min-width: 0; display: flex; flex-direction: column; gap: 7px; padding: 12px 13px; border: 1px solid #edf1ed; border-radius: 11px; background: #fff; }
+.monthly-flow-card > span { color: #7c8981; font-size: 11px; font-weight: 620; }
+.monthly-flow-card > strong { overflow: hidden; color: #36483e; font-size: 17px; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+.monthly-flow-card.income > strong { color: #3c7656; }
+.monthly-flow-card.expense > strong { color: #91634b; }
+.monthly-flow-chart { display: flex; flex-direction: column; gap: 9px; padding: 0 2px; }
+.monthly-flow-row { display: grid; grid-template-columns: 70px minmax(40px, 1fr) 102px; align-items: center; gap: 9px; color: #718077; font-size: 11px; }
+.monthly-flow-row > strong { color: #46574d; font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.movement-progress { height: 7px; }
+.movement-progress.income > span { background: linear-gradient(90deg,#5d9870,#91b99a); }
+.movement-progress.expense > span { background: linear-gradient(90deg,#c48b66,#e1b28f); }
+.movement-category-breakdown { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.movement-category-chart h4 { margin: 0 0 10px; color: #53645a; font-size: 11px; font-weight: 680; }
+.movement-category-list { display: flex; flex-direction: column; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.movement-category-list .category-line { margin-bottom: 5px; font-size: 10px; }
+.movement-category-list .category-line strong { font-size: 10px; }
 .movement-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 18px; padding: 18px; border: 1px solid #edf1ed; border-radius: 13px; background: #fbfcfa; }
 .movement-list { padding: 0; margin: 0; list-style: none; }
 .movement-row { min-height: 68px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #f0f2ef; }
@@ -162,6 +189,15 @@
   .charge-row, .subscription-row { gap: 9px; }
   .movement-form { padding: 14px; }
   .movement-row { gap: 8px; }
+  .movement-analytics { padding: 14px; }
+  .monthly-summary-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .monthly-flow-cards { gap: 6px; }
+  .monthly-flow-card { padding: 10px 8px; }
+  .monthly-flow-card > span { font-size: 10px; }
+  .monthly-flow-card > strong { font-size: 13px; }
+  .monthly-flow-row { grid-template-columns: 58px minmax(30px, 1fr) 78px; gap: 6px; font-size: 10px; }
+  .monthly-flow-row > strong { font-size: 10px; }
+  .movement-category-breakdown { grid-template-columns: 1fr; gap: 14px; }
   .movement-date { width: 73px; font-size: 10px; }
   .movement-type-mark { width: 26px; height: 26px; }
   .movement-amount { font-size: 10px; }
