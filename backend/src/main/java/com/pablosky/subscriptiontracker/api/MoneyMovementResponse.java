@@ -14,7 +14,8 @@ public record MoneyMovementResponse(
         String currency,
         MovementType type,
         String category,
-        LocalDate movementDate
+        LocalDate movementDate,
+        UUID subscriptionId
 ) {
 
     public static MoneyMovementResponse from(MoneyMovement movement) {
@@ -25,7 +26,8 @@ public record MoneyMovementResponse(
                 movement.currency(),
                 movement.type(),
                 movement.category(),
-                movement.movementDate()
+                movement.movementDate(),
+                movement.subscriptionId()
         );
     }
 }

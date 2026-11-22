@@ -12,8 +12,21 @@ public record MoneyMovement(
         String currency,
         MovementType type,
         String category,
-        LocalDate movementDate
+        LocalDate movementDate,
+        UUID subscriptionId
 ) {
+
+    public MoneyMovement(
+            UUID id,
+            String description,
+            BigDecimal amount,
+            String currency,
+            MovementType type,
+            String category,
+            LocalDate movementDate
+    ) {
+        this(id, description, amount, currency, type, category, movementDate, null);
+    }
 
     public MoneyMovement {
         Objects.requireNonNull(id, "id is required");

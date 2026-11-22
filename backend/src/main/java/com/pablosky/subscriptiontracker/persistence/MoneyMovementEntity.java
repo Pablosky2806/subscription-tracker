@@ -40,6 +40,9 @@ public class MoneyMovementEntity {
     @Column(name = "movement_date", nullable = false)
     private LocalDate movementDate;
 
+    @Column(name = "subscription_id")
+    private UUID subscriptionId;
+
     protected MoneyMovementEntity() {
         // JPA requires a no-argument constructor.
     }
@@ -52,9 +55,10 @@ public class MoneyMovementEntity {
         this.type = movement.type();
         this.category = movement.category();
         this.movementDate = movement.movementDate();
+        this.subscriptionId = movement.subscriptionId();
     }
 
     public MoneyMovement toDomain() {
-        return new MoneyMovement(id, description, amount, currency, type, category, movementDate);
+        return new MoneyMovement(id, description, amount, currency, type, category, movementDate, subscriptionId);
     }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createMoneyMovement, deleteMoneyMovement, getMoneyMovements, updateMoneyMovement } from './api'
 import { isoDateToDmy, todayAsIsoDate } from './dateUtils'
-import type { MoneyMovement, MoneyMovementInput } from './types'
+import type { MoneyMovement, MoneyMovementInput, Subscription } from './types'
 import MovementForm from './MovementForm'
 import MovementCsvImport from './MovementCsvImport'
 
@@ -111,7 +111,7 @@ function CategoryBars({
   )
 }
 
-function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
+function MovementsPanel({ refreshKey = 0, subscriptions = [] }: { refreshKey?: number; subscriptions?: Subscription[] }) {
   const [movements, setMovements] = useState<MoneyMovement[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -130,9 +130,11 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
   const monthlySummaries = summarizeMonth(movements, selectedMonth)
   const categories = Array.from(new Set(movements.map((movement) => movement.category)))
     .sort((first, second) => first.localeCompare(second, 'es'))
+  const subscriptionsById = new Map(subscriptions.map((subscription) => [subscription.id, subscription]))
   const normalizedSearch = search.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const filteredMovements = movements.filter((movement) => {
-    const normalizedText = `${movement.description} ${movement.category}`
+    const linkedSubscription = movement.subscriptionId ? subscriptionsById.get(movement.subscriptionId) : undefined
+    const normalizedText = `${movement.description} ${movement.category} ${linkedSubscription?.name ?? ''}`
       .toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     return (!normalizedSearch || normalizedText.includes(normalizedSearch))
       && (!listMonth || movement.movementDate.startsWith(listMonth))
@@ -325,6 +327,7 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
       {formOpen && <MovementForm
         key={editingMovement?.id ?? 'new-movement'}
         movement={editingMovement ?? undefined}
+        subscriptions={subscriptions}
         onCancel={() => {
           setFormOpen(false)
           setEditingMovement(null)
@@ -397,6 +400,9 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
               <div className="row-description">
                 <strong>{movement.description}</strong>
                 <span>{movement.category} · {movement.type === 'INCOME' ? 'Ingreso' : 'Gasto'}</span>
+                {movement.subscriptionId && subscriptionsById.has(movement.subscriptionId) && (
+                  <span className="linked-subscription">Suscripción: {subscriptionsById.get(movement.subscriptionId)?.name}</span>
+                )}
               </div>
               <strong className={`movement-amount ${movement.type === 'INCOME' ? 'is-income' : 'is-expense'}`}>
                 {movement.type === 'INCOME' ? '+' : '−'}{formatMoney(movement.amount, movement.currency)}

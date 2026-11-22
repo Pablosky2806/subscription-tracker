@@ -1,20 +1,22 @@
 import { useState, type FormEvent } from 'react'
 import { isoDateToDmy, parseDmyDateToIso, todayAsIsoDate } from './dateUtils'
-import type { MoneyMovement, MoneyMovementInput, MovementType } from './types'
+import type { MoneyMovement, MoneyMovementInput, MovementType, Subscription } from './types'
 
 interface MovementFormProps {
   onCancel: () => void
   onSave: (movement: MoneyMovementInput) => Promise<void>
   movement?: MoneyMovement
+  subscriptions: Subscription[]
 }
 
-function MovementForm({ onCancel, onSave, movement }: MovementFormProps) {
+function MovementForm({ onCancel, onSave, movement, subscriptions }: MovementFormProps) {
   const [description, setDescription] = useState(movement?.description ?? '')
   const [amount, setAmount] = useState(movement ? String(movement.amount) : '')
   const [currency, setCurrency] = useState(movement?.currency ?? 'EUR')
   const [type, setType] = useState<MovementType>(movement?.type ?? 'EXPENSE')
   const [category, setCategory] = useState(movement?.category ?? '')
   const [movementDate, setMovementDate] = useState(movement ? isoDateToDmy(movement.movementDate) : isoDateToDmy(todayAsIsoDate()))
+  const [subscriptionId, setSubscriptionId] = useState(movement?.subscriptionId ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -36,6 +38,7 @@ function MovementForm({ onCancel, onSave, movement }: MovementFormProps) {
         type,
         category: category.trim(),
         movementDate: parsedDate,
+        subscriptionId: subscriptionId || null,
       })
     } catch (saveError: unknown) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar el movimiento.')
@@ -126,6 +129,18 @@ function MovementForm({ onCancel, onSave, movement }: MovementFormProps) {
           value={movementDate}
           onChange={(event) => setMovementDate(event.target.value)}
         />
+      </label>
+
+      <label className="form-field">
+        <span>Suscripción vinculada (opcional)</span>
+        <select value={subscriptionId} onChange={(event) => setSubscriptionId(event.target.value)}>
+          <option value="">Sin vincular</option>
+          {subscriptions.map((subscription) => (
+            <option key={subscription.id} value={subscription.id}>
+              {subscription.name}{subscription.active ? '' : ' (archivada)'}
+            </option>
+          ))}
+        </select>
       </label>
 
       {error && <p className="form-error" role="alert">{error}</p>}

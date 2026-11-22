@@ -93,6 +93,18 @@ public class SubscriptionController {
         subscriptionRepository.saveAll(newSubscriptions);
 
         var backupMovements = request.movements() == null ? List.<MoneyMovementBackupItemRequest>of() : request.movements();
+        Set<UUID> referencedSubscriptionIds = new HashSet<>();
+        backupMovements.stream()
+                .map(MoneyMovementBackupItemRequest::subscriptionId)
+                .filter(id -> id != null)
+                .forEach(referencedSubscriptionIds::add);
+        Set<UUID> validSubscriptionIds = new HashSet<>(idsInBackup);
+        subscriptionRepository.findAllById(referencedSubscriptionIds)
+                .forEach(entity -> validSubscriptionIds.add(entity.toDomain().id()));
+        if (!validSubscriptionIds.containsAll(referencedSubscriptionIds)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Backup references a missing subscription");
+        }
+
         var movementIdsInBackup = new HashSet<UUID>();
         for (var item : backupMovements) {
             if (!movementIdsInBackup.add(item.id())) {

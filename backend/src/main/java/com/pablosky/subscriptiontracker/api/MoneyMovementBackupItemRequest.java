@@ -20,7 +20,8 @@ public record MoneyMovementBackupItemRequest(
         @NotBlank @Pattern(regexp = "^[A-Z]{3}$") String currency,
         @NotNull MovementType type,
         @NotBlank @Size(max = 80) String category,
-        @NotNull LocalDate movementDate
+        @NotNull LocalDate movementDate,
+        UUID subscriptionId
 ) {
 
     public MoneyMovement toDomain() {
@@ -31,7 +32,8 @@ public record MoneyMovementBackupItemRequest(
                 currency,
                 type,
                 category.trim(),
-                movementDate
+                movementDate,
+                subscriptionId
         );
     }
 }

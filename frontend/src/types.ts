@@ -8,10 +8,12 @@ export interface MoneyMovementInput {
   type: MovementType
   category: string
   movementDate: string
+  subscriptionId?: string | null
 }
 
 export interface MoneyMovement extends MoneyMovementInput {
   id: string
+  subscriptionId: string | null
 }
 
 export interface SubscriptionInput {

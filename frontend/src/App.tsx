@@ -616,7 +616,7 @@ function App() {
           )}
         </section>
 
-        <MovementsPanel refreshKey={movementRefreshKey} />
+        <MovementsPanel refreshKey={movementRefreshKey} subscriptions={subscriptions} />
 
         <footer className="footer-note">Tus datos permanecen en tu propio servidor.</footer>
       </main>

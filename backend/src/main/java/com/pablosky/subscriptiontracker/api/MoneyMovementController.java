@@ -2,6 +2,7 @@ package com.pablosky.subscriptiontracker.api;
 
 import com.pablosky.subscriptiontracker.persistence.MoneyMovementEntity;
 import com.pablosky.subscriptiontracker.persistence.MoneyMovementRepository;
+import com.pablosky.subscriptiontracker.persistence.SubscriptionRepository;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -25,9 +28,14 @@ import java.util.UUID;
 public class MoneyMovementController {
 
     private final MoneyMovementRepository movementRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public MoneyMovementController(MoneyMovementRepository movementRepository) {
+    public MoneyMovementController(
+            MoneyMovementRepository movementRepository,
+            SubscriptionRepository subscriptionRepository
+    ) {
         this.movementRepository = movementRepository;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     @GetMapping
@@ -42,6 +50,7 @@ public class MoneyMovementController {
     public ResponseEntity<MoneyMovementResponse> createMovement(
             @Valid @RequestBody MoneyMovementWriteRequest request
     ) {
+        validateSubscription(request.subscriptionId());
         var created = movementRepository.save(
                 new MoneyMovementEntity(request.toDomain(UUID.randomUUID()))
         ).toDomain();
@@ -56,6 +65,7 @@ public class MoneyMovementController {
     public MoneyMovementImportResponse importMovements(
             @Valid @RequestBody MoneyMovementImportRequest request
     ) {
+        validateSubscriptions(request.movements());
         var entities = request.movements().stream()
                 .map(movement -> new MoneyMovementEntity(movement.toDomain(UUID.randomUUID())))
                 .toList();
@@ -68,6 +78,7 @@ public class MoneyMovementController {
             @PathVariable UUID id,
             @Valid @RequestBody MoneyMovementWriteRequest request
     ) {
+        validateSubscription(request.subscriptionId());
         if (!movementRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movement not found");
         }
@@ -75,6 +86,27 @@ public class MoneyMovementController {
                 new MoneyMovementEntity(request.toDomain(id))
         ).toDomain();
         return MoneyMovementResponse.from(updated);
+    }
+
+    private void validateSubscription(UUID subscriptionId) {
+        if (subscriptionId != null && !subscriptionRepository.existsById(subscriptionId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subscription does not exist");
+        }
+    }
+
+    private void validateSubscriptions(List<MoneyMovementWriteRequest> requests) {
+        Set<UUID> requestedIds = new HashSet<>();
+        requests.stream()
+                .map(MoneyMovementWriteRequest::subscriptionId)
+                .filter(id -> id != null)
+                .forEach(requestedIds::add);
+        if (requestedIds.isEmpty()) return;
+
+        Set<UUID> existingIds = new HashSet<>();
+        subscriptionRepository.findAllById(requestedIds).forEach(entity -> existingIds.add(entity.toDomain().id()));
+        if (existingIds.size() != requestedIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more subscriptions do not exist");
+        }
     }
 
     @DeleteMapping("/{id}")
