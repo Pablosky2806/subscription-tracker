@@ -30,6 +30,10 @@ Aplicación self-hosted para registrar suscripciones y consultar cuánto cuestan
 
 En cada etapa explicaremos las decisiones y el código antes de avanzar a la siguiente.
 
+## Integración continua
+
+GitHub Actions ejecuta la compilación de React/TypeScript y `mvn test` al subir cambios a `main` o abrir una pull request contra `main`. La suite incluye el test de integración con Testcontainers, que usa el Docker disponible en el runner de GitHub.
+
 ## Desarrollo local
 
 La forma habitual de iniciar la aplicación completa es con Docker Desktop. Compose construye una imagen para Spring Boot más el frontend React compilado, y ejecuta PostgreSQL en un contenedor separado:
