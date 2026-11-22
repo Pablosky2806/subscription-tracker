@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { createMoneyMovement, deleteMoneyMovement, getMoneyMovements } from './api'
+import { createMoneyMovement, deleteMoneyMovement, getMoneyMovements, updateMoneyMovement } from './api'
 import { isoDateToDmy, todayAsIsoDate } from './dateUtils'
 import type { MoneyMovement, MoneyMovementInput } from './types'
 import MovementForm from './MovementForm'
@@ -115,6 +115,7 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
   const [movements, setMovements] = useState<MoneyMovement[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
+  const [editingMovement, setEditingMovement] = useState<MoneyMovement | null>(null)
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [importBusy, setImportBusy] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -165,12 +166,17 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
   }, [refreshKey])
 
   async function handleSave(input: MoneyMovementInput) {
-    const created = await createMoneyMovement(input)
-    setMovements((current) => [...current, created]
+    const saved = editingMovement
+      ? await updateMoneyMovement(editingMovement.id, input)
+      : await createMoneyMovement(input)
+    setMovements((current) => [...current.filter((item) => item.id !== saved.id), saved]
       .sort((first, second) => second.movementDate.localeCompare(first.movementDate)))
     setFormOpen(false)
+    setEditingMovement(null)
     setError(null)
-    setNotice(`${created.description} se ha guardado.`)
+    setNotice(editingMovement
+      ? `${saved.description} se ha actualizado.`
+      : `${saved.description} se ha guardado.`)
   }
 
   async function handleDelete(movement: MoneyMovement) {
@@ -238,6 +244,7 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
           )}
           {!formOpen && (
             <button className="primary-button" type="button" onClick={() => {
+              setEditingMovement(null)
               setError(null)
               setNotice(null)
               setFormOpen(true)
@@ -315,7 +322,15 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
         )}
       </section>
 
-      {formOpen && <MovementForm onCancel={() => setFormOpen(false)} onSave={handleSave} />}
+      {formOpen && <MovementForm
+        key={editingMovement?.id ?? 'new-movement'}
+        movement={editingMovement ?? undefined}
+        onCancel={() => {
+          setFormOpen(false)
+          setEditingMovement(null)
+        }}
+        onSave={handleSave}
+      />}
       {csvFile && <MovementCsvImport
         file={csvFile}
         existingMovements={movements}
@@ -386,16 +401,34 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
               <strong className={`movement-amount ${movement.type === 'INCOME' ? 'is-income' : 'is-expense'}`}>
                 {movement.type === 'INCOME' ? '+' : '−'}{formatMoney(movement.amount, movement.currency)}
               </strong>
-              <button
-                className="row-action-button delete-action"
-                type="button"
-                aria-label={`Borrar ${movement.description}`}
-                title="Borrar movimiento"
-                disabled={busyId === movement.id}
-                onClick={() => handleDelete(movement)}
-              >
-                ×
-              </button>
+              <div className="movement-row-actions">
+                <button
+                  className="row-action-button"
+                  type="button"
+                  aria-label={`Editar ${movement.description}`}
+                  title="Editar movimiento"
+                  disabled={formOpen || busyId === movement.id}
+                  onClick={() => {
+                    setEditingMovement(movement)
+                    setError(null)
+                    setNotice(null)
+                    setFormOpen(true)
+                    setCsvFile(null)
+                  }}
+                >
+                  ✎
+                </button>
+                <button
+                  className="row-action-button delete-action"
+                  type="button"
+                  aria-label={`Borrar ${movement.description}`}
+                  title="Borrar movimiento"
+                  disabled={formOpen || busyId === movement.id}
+                  onClick={() => handleDelete(movement)}
+                >
+                  ×
+                </button>
+              </div>
             </li>
               ))}
             </ul>

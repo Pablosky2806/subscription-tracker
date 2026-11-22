@@ -43,6 +43,19 @@ export async function createMoneyMovement(input: MoneyMovementInput) {
   return response.json() as Promise<MoneyMovement>
 }
 
+export async function updateMoneyMovement(id: string, input: MoneyMovementInput): Promise<MoneyMovement> {
+  const response = await fetch(`/api/movements/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo actualizar el movimiento (HTTP ${response.status}).`)
+  }
+  return response.json() as Promise<MoneyMovement>
+}
+
 export async function importMoneyMovements(movements: MoneyMovementInput[]): Promise<number> {
   const response = await fetch('/api/movements/import', {
     method: 'POST',
