@@ -90,22 +90,6 @@
 .form-field { min-width: 0; display: flex; flex-direction: column; gap: 7px; color: #68776e; font-size: 11px; font-weight: 650; }
 .form-field-wide { grid-column: span 2; }
 .form-field input, .form-field select { width: 100%; height: 41px; padding: 0 11px; border: 1px solid #e1e8e2; border-radius: 9px; outline: none; color: #35463d; background: #fff; font-size: 12px; font-weight: 500; }
-.category-picker { position: relative; }
-.category-picker-trigger { width: 100%; height: 41px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 11px; border: 1px solid #e1e8e2; border-radius: 9px; color: #35463d; background: #fff; font-size: 12px; font-weight: 500; text-align: left; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
-.category-picker-trigger:hover, .category-picker-trigger.is-open { border-color: #9dbba3; }
-.category-picker-trigger.is-open { box-shadow: 0 0 0 3px rgba(76,125,93,.1); }
-.category-picker-trigger > svg { width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: #819087; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; transition: transform .15s ease; }
-.category-picker-trigger.is-open > svg { transform: rotate(180deg); }
-.category-placeholder { color: #aab3ac; }
-.category-menu { position: absolute; z-index: 20; top: calc(100% + 7px); left: 0; right: 0; max-height: 250px; overflow-y: auto; padding: 6px; border: 1px solid #e3eae3; border-radius: 12px; background: #fff; box-shadow: 0 14px 32px rgba(30,53,41,.14); animation: category-menu-in .14s ease-out; }
-.category-option { width: 100%; min-height: 38px; display: flex; align-items: center; gap: 9px; padding: 5px 8px; border: 0; border-radius: 8px; color: #52645a; background: transparent; font-size: 12px; font-weight: 560; text-align: left; cursor: pointer; }
-.category-option:hover, .category-option.is-selected { color: #315744; background: #f0f6f0; }
-.category-option-mark { width: 25px; height: 25px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 8px; color: #53785f; background: #edf4ed; font-size: 11px; font-weight: 700; }
-.custom-category-option { margin-top: 5px; padding-top: 8px; border-top: 1px solid #edf1ed; border-radius: 0 0 8px 8px; }
-.custom-mark { color: #637c6c; background: #f2f5f2; font-size: 17px; font-weight: 500; }
-.category-check { margin-left: auto; color: #4b7958; font-size: 13px; }
-.category-menu + input { animation: category-menu-in .14s ease-out; }
-@keyframes category-menu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 .form-field input::placeholder { color: #aab3ac; }
 .form-field input:focus, .form-field select:focus { border-color: #6d9b7b; box-shadow: 0 0 0 3px rgba(76,125,93,.12); }
 .amount-input { position: relative; }
