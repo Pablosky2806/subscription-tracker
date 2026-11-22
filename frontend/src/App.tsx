@@ -140,12 +140,14 @@ function CategoryBreakdown({ summary }: { summary: Summary }) {
 
 function SubscriptionList({
   subscriptions,
+  emptyState,
   onEdit,
   onArchive,
   onRestore,
   busyId,
 }: {
   subscriptions: Subscription[]
+  emptyState: 'empty' | 'filtered'
   onEdit: (subscription: Subscription) => void
   onArchive: (subscription: Subscription) => void
   onRestore: (subscription: Subscription) => void
@@ -154,8 +156,10 @@ function SubscriptionList({
   if (subscriptions.length === 0) {
     return (
       <div className="empty-state compact-empty">
-        <strong>Tu lista está vacía</strong>
-        <p>Usa «Añadir suscripción» para registrar tu primer servicio.</p>
+        <strong>{emptyState === 'empty' ? 'Tu lista está vacía' : 'No hay coincidencias'}</strong>
+        <p>{emptyState === 'empty'
+          ? 'Usa «Añadir suscripción» para registrar tu primer servicio.'
+          : 'Prueba otra búsqueda o cambia el filtro de estado.'}</p>
       </div>
     )
   }
@@ -227,6 +231,26 @@ function App() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [backupBusy, setBackupBusy] = useState(false)
   const backupInputRef = useRef<HTMLInputElement>(null)
+  const [subscriptionQuery, setSubscriptionQuery] = useState('')
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'ALL' | 'ACTIVE' | 'ARCHIVED'>('ALL')
+
+  const normalizedQuery = subscriptionQuery
+    .trim()
+    .toLocaleLowerCase('es')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+  const filteredSubscriptions = subscriptions.filter((subscription) => {
+    const matchesStatus = subscriptionStatus === 'ALL'
+      || (subscriptionStatus === 'ACTIVE' && subscription.active)
+      || (subscriptionStatus === 'ARCHIVED' && !subscription.active)
+    const searchableText = `${subscription.name} ${subscription.category}`
+      .toLocaleLowerCase('es')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+    return matchesStatus && searchableText.includes(normalizedQuery)
+  })
+  const activeSubscriptionCount = subscriptions.filter((subscription) => subscription.active).length
+  const archivedSubscriptionCount = subscriptions.length - activeSubscriptionCount
 
   async function refreshDashboard() {
     const data = await getDashboardData(new AbortController().signal)
@@ -480,9 +504,51 @@ function App() {
             </div>
             {!loading && <span className="count-pill">{subscriptions.length}</span>}
           </div>
+          {!loading && <div className="subscription-tools">
+            <label className="subscription-search">
+              <span className="visually-hidden">Buscar suscripciones</span>
+              <svg aria-hidden="true" viewBox="0 0 20 20">
+                <circle cx="8.5" cy="8.5" r="5.5" />
+                <path d="m13 13 4 4" />
+              </svg>
+              <input
+                type="search"
+                placeholder="Buscar por servicio o categoría"
+                value={subscriptionQuery}
+                onChange={(event) => setSubscriptionQuery(event.target.value)}
+              />
+            </label>
+            <div className="subscription-filters" role="group" aria-label="Filtrar por estado">
+              <button
+                className={subscriptionStatus === 'ALL' ? 'is-selected' : ''}
+                type="button"
+                aria-pressed={subscriptionStatus === 'ALL'}
+                onClick={() => setSubscriptionStatus('ALL')}
+              >
+                Todas <span>{subscriptions.length}</span>
+              </button>
+              <button
+                className={subscriptionStatus === 'ACTIVE' ? 'is-selected' : ''}
+                type="button"
+                aria-pressed={subscriptionStatus === 'ACTIVE'}
+                onClick={() => setSubscriptionStatus('ACTIVE')}
+              >
+                Activas <span>{activeSubscriptionCount}</span>
+              </button>
+              <button
+                className={subscriptionStatus === 'ARCHIVED' ? 'is-selected' : ''}
+                type="button"
+                aria-pressed={subscriptionStatus === 'ARCHIVED'}
+                onClick={() => setSubscriptionStatus('ARCHIVED')}
+              >
+                Archivadas <span>{archivedSubscriptionCount}</span>
+              </button>
+            </div>
+          </div>}
           {loading ? <p className="loading-message">Cargando suscripciones…</p> : (
             <SubscriptionList
-              subscriptions={subscriptions}
+              subscriptions={filteredSubscriptions}
+              emptyState={subscriptions.length === 0 ? 'empty' : 'filtered'}
               onEdit={(subscription) => {
                 setNotice(null)
                 setEditingSubscription(subscription)
