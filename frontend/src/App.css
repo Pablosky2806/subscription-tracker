@@ -126,6 +126,13 @@
 .movement-category-list .category-line { margin-bottom: 5px; font-size: 10px; }
 .movement-category-list .category-line strong { font-size: 10px; }
 .movement-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 18px; padding: 18px; border: 1px solid #edf1ed; border-radius: 13px; background: #fbfcfa; }
+.movement-tools { display: grid; grid-template-columns: minmax(180px, 1.5fr) repeat(3, minmax(130px, 1fr)); gap: 10px; margin: 4px 0 3px; }
+.movement-filter-field { min-width: 0; display: flex; flex-direction: column; gap: 6px; color: #758279; font-size: 10px; font-weight: 650; }
+.movement-filter-field input, .movement-filter-field select { width: 100%; min-width: 0; height: 37px; padding: 0 10px; border: 1px solid #e1e8e2; border-radius: 9px; outline: none; color: #43554a; background: #fff; font: inherit; font-weight: 500; }
+.movement-filter-field input:focus, .movement-filter-field select:focus { border-color: #6d9b7b; box-shadow: 0 0 0 3px rgba(76,125,93,.12); }
+.movement-filter-summary { min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #96a097; font-size: 10px; }
+.movement-filter-summary .text-button { font-size: 10px; }
+.movement-filter-empty { min-height: 115px; }
 .movement-list { padding: 0; margin: 0; list-style: none; }
 .movement-row { min-height: 68px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #f0f2ef; }
 .movement-date { width: 83px; flex: 0 0 auto; color: #849088; font-size: 11px; font-variant-numeric: tabular-nums; }

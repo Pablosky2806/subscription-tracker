@@ -122,7 +122,30 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(() => todayAsIsoDate().slice(0, 7))
+  const [listMonth, setListMonth] = useState('')
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const monthlySummaries = summarizeMonth(movements, selectedMonth)
+  const categories = Array.from(new Set(movements.map((movement) => movement.category)))
+    .sort((first, second) => first.localeCompare(second, 'es'))
+  const normalizedSearch = search.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const filteredMovements = movements.filter((movement) => {
+    const normalizedText = `${movement.description} ${movement.category}`
+      .toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    return (!normalizedSearch || normalizedText.includes(normalizedSearch))
+      && (!listMonth || movement.movementDate.startsWith(listMonth))
+      && (typeFilter === 'ALL' || movement.type === typeFilter)
+      && (!categoryFilter || movement.category === categoryFilter)
+  })
+  const filtersActive = Boolean(search || listMonth || categoryFilter || typeFilter !== 'ALL')
+
+  function resetFilters() {
+    setSearch('')
+    setListMonth('')
+    setCategoryFilter('')
+    setTypeFilter('ALL')
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -306,8 +329,49 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
           <p>Registra un gasto o un ingreso para empezar tu historial.</p>
         </div>
       ) : (
-        <ul className="movement-list">
-          {movements.map((movement) => (
+        <>
+          <div className="movement-tools">
+            <label className="movement-filter-field movement-search-field">
+              <span>Buscar</span>
+              <input
+                type="search"
+                placeholder="Concepto o categoría"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </label>
+            <label className="movement-filter-field">
+              <span>Mes</span>
+              <input type="month" value={listMonth} onChange={(event) => setListMonth(event.target.value)} />
+            </label>
+            <label className="movement-filter-field">
+              <span>Tipo</span>
+              <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as typeof typeFilter)}>
+                <option value="ALL">Todos</option>
+                <option value="EXPENSE">Gastos</option>
+                <option value="INCOME">Ingresos</option>
+              </select>
+            </label>
+            <label className="movement-filter-field">
+              <span>Categoría</span>
+              <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+                <option value="">Todas</option>
+                {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+            </label>
+          </div>
+          <div className="movement-filter-summary" aria-live="polite">
+            <span>{filteredMovements.length} de {movements.length} movimientos</span>
+            {filtersActive && <button className="text-button" type="button" onClick={resetFilters}>Quitar filtros</button>}
+          </div>
+          {filteredMovements.length === 0 ? (
+            <div className="empty-state compact-empty movement-filter-empty">
+              <strong>No hay movimientos con esos filtros</strong>
+              <p>Prueba con otro mes, tipo o categoría.</p>
+            </div>
+          ) : (
+            <ul className="movement-list">
+              {filteredMovements.map((movement) => (
             <li className="movement-row" key={movement.id}>
               <time className="movement-date" dateTime={movement.movementDate}>
                 {isoDateToDmy(movement.movementDate)}
@@ -333,8 +397,10 @@ function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
                 ×
               </button>
             </li>
-          ))}
-        </ul>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   )
