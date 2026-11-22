@@ -112,7 +112,7 @@ PostgreSQL conserva sus datos en el volumen Docker `postgres_data`. Las credenci
 
 ## Pruebas de persistencia
 
-El test `SubscriptionRepositoryTest` inicia una instancia temporal de PostgreSQL con Testcontainers, aplica la migración de Flyway y comprueba que JPA guarda y recupera suscripciones, filtra las archivadas y ordena los próximos cobros dentro del intervalo. No usa ni modifica la base de datos de desarrollo. Para ejecutarlo, inicia Docker Desktop y ejecuta desde `backend/`:
+El test `SubscriptionApplicationIntegrationTest` inicia una instancia temporal de PostgreSQL con Testcontainers, aplica la migración de Flyway y comprueba la persistencia, las consultas y los recorridos HTTP de crear, leer, editar, archivar y restaurar. También verifica que la API rechaza datos inválidos. No usa ni modifica la base de datos de desarrollo. Para ejecutarlo, inicia Docker Desktop y ejecuta desde `backend/`:
 
 ```powershell
 mvn test
