@@ -9,6 +9,7 @@ Aplicación self-hosted para registrar suscripciones y consultar cuánto cuestan
 - Mostrar gasto mensual y anual estimado.
 - Mostrar próximos cobros ordenados por fecha.
 - Mostrar gasto agrupado por categoría.
+- Exportar e importar copias JSON; la importación conserva los datos existentes y omite suscripciones con el mismo identificador.
 
 ## Arquitectura acordada
 

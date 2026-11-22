@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { archiveSubscription, createSubscription, getDashboardData, restoreSubscription, updateSubscription } from './api'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { archiveSubscription, createSubscription, getDashboardData, importSubscriptionBackup, restoreSubscription, updateSubscription } from './api'
 import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
 import SubscriptionForm from './SubscriptionForm'
 import './App.css'
@@ -225,12 +225,46 @@ function App() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [backupBusy, setBackupBusy] = useState(false)
+  const backupInputRef = useRef<HTMLInputElement>(null)
 
   async function refreshDashboard() {
     const data = await getDashboardData(new AbortController().signal)
     setSubscriptions(data.subscriptions)
     setSummary(data.summary)
     setUpcomingCharges(data.upcomingCharges)
+  }
+
+  async function handleBackupFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    if (!file) return
+
+    let backup: unknown
+    try {
+      backup = JSON.parse(await file.text()) as unknown
+    } catch {
+      setError('El archivo no contiene un JSON válido.')
+      return
+    }
+
+    const shouldImport = window.confirm(
+      'La copia añadirá las suscripciones que todavía no existan. Las que ya tienes se conservarán sin cambios. ¿Continuar?',
+    )
+    if (!shouldImport) return
+
+    setBackupBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const result = await importSubscriptionBackup(backup)
+      await refreshDashboard()
+      setNotice(`Copia restaurada: ${result.imported} añadidas y ${result.skippedExisting} ya existentes conservadas.`)
+    } catch (importError: unknown) {
+      setError(importError instanceof Error ? importError.message : 'No se pudo restaurar la copia.')
+    } finally {
+      setBackupBusy(false)
+    }
   }
 
   async function handleSave(input: SubscriptionInput) {
@@ -340,6 +374,22 @@ function App() {
             <div className="today-label">{new Intl.DateTimeFormat('es-ES', { dateStyle: 'long' }).format(new Date())}</div>
             {!formOpen && (
               <div className="dashboard-actions">
+                <input
+                  ref={backupInputRef}
+                  accept=".json,application/json"
+                  aria-label="Seleccionar archivo de copia de seguridad"
+                  className="backup-file-input"
+                  type="file"
+                  onChange={handleBackupFile}
+                />
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={backupBusy}
+                  onClick={() => backupInputRef.current?.click()}
+                >
+                  {backupBusy ? 'Restaurando…' : 'Restaurar copia'}
+                </button>
                 <button className="secondary-button" type="button" onClick={() => downloadBackup(subscriptions)}>
                   Exportar copia
                 </button>

@@ -44,6 +44,19 @@ export function updateSubscription(id: string, input: SubscriptionInput) {
   return writeSubscription(`/api/subscriptions/${encodeURIComponent(id)}`, 'PUT', input)
 }
 
+export async function importSubscriptionBackup(backup: unknown): Promise<{ imported: number; skippedExisting: number }> {
+  const response = await fetch('/api/subscriptions/import', {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(backup),
+  })
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null) as { detail?: string; message?: string } | null
+    throw new Error(problem?.detail ?? problem?.message ?? `No se pudo restaurar la copia (HTTP ${response.status}).`)
+  }
+  return response.json() as Promise<{ imported: number; skippedExisting: number }>
+}
+
 export async function archiveSubscription(id: string): Promise<Subscription> {
   const response = await fetch(`/api/subscriptions/${encodeURIComponent(id)}/archive`, {
     method: 'PATCH',

@@ -3,6 +3,7 @@ package com.pablosky.subscriptiontracker.api;
 import com.pablosky.subscriptiontracker.persistence.SubscriptionRepository;
 import com.pablosky.subscriptiontracker.persistence.SubscriptionEntity;
 import jakarta.validation.Valid;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -54,6 +57,37 @@ public class SubscriptionController {
         return ResponseEntity
                 .created(URI.create("/api/subscriptions/" + created.id()))
                 .body(SubscriptionResponse.from(created));
+    }
+
+    @PostMapping("/import")
+    @Transactional
+    public SubscriptionBackupImportResponse importBackup(
+            @Valid @RequestBody SubscriptionBackupImportRequest request
+    ) {
+        if (!"subscription-tracker-backup".equals(request.format()) || request.version() != 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported backup format or version");
+        }
+
+        var idsInBackup = new HashSet<UUID>();
+        for (var item : request.subscriptions()) {
+            if (!idsInBackup.add(item.id())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Backup contains duplicate subscription IDs");
+            }
+        }
+
+        Set<UUID> existingIds = new HashSet<>();
+        subscriptionRepository.findAllById(idsInBackup).forEach(entity -> existingIds.add(entity.toDomain().id()));
+
+        var newSubscriptions = request.subscriptions().stream()
+                .filter(item -> !existingIds.contains(item.id()))
+                .map(item -> new SubscriptionEntity(item.toDomain()))
+                .toList();
+        subscriptionRepository.saveAll(newSubscriptions);
+
+        return new SubscriptionBackupImportResponse(
+                newSubscriptions.size(),
+                request.subscriptions().size() - newSubscriptions.size()
+        );
     }
 
     @PutMapping("/{id}")
