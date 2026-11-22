@@ -2,6 +2,8 @@ package com.pablosky.subscriptiontracker.api;
 
 import com.pablosky.subscriptiontracker.persistence.SubscriptionRepository;
 import com.pablosky.subscriptiontracker.persistence.SubscriptionEntity;
+import com.pablosky.subscriptiontracker.persistence.MoneyMovementEntity;
+import com.pablosky.subscriptiontracker.persistence.MoneyMovementRepository;
 import jakarta.validation.Valid;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
@@ -28,9 +30,14 @@ import java.util.UUID;
 public class SubscriptionController {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final MoneyMovementRepository movementRepository;
 
-    public SubscriptionController(SubscriptionRepository subscriptionRepository) {
+    public SubscriptionController(
+            SubscriptionRepository subscriptionRepository,
+            MoneyMovementRepository movementRepository
+    ) {
         this.subscriptionRepository = subscriptionRepository;
+        this.movementRepository = movementRepository;
     }
 
     @GetMapping
@@ -64,7 +71,8 @@ public class SubscriptionController {
     public SubscriptionBackupImportResponse importBackup(
             @Valid @RequestBody SubscriptionBackupImportRequest request
     ) {
-        if (!"subscription-tracker-backup".equals(request.format()) || request.version() != 1) {
+        if (!"subscription-tracker-backup".equals(request.format())
+                || (request.version() != 1 && request.version() != 2)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported backup format or version");
         }
 
@@ -84,9 +92,28 @@ public class SubscriptionController {
                 .toList();
         subscriptionRepository.saveAll(newSubscriptions);
 
+        var backupMovements = request.movements() == null ? List.<MoneyMovementBackupItemRequest>of() : request.movements();
+        var movementIdsInBackup = new HashSet<UUID>();
+        for (var item : backupMovements) {
+            if (!movementIdsInBackup.add(item.id())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Backup contains duplicate movement IDs");
+            }
+        }
+
+        Set<UUID> existingMovementIds = new HashSet<>();
+        movementRepository.findAllById(movementIdsInBackup)
+                .forEach(entity -> existingMovementIds.add(entity.toDomain().id()));
+        var newMovements = backupMovements.stream()
+                .filter(item -> !existingMovementIds.contains(item.id()))
+                .map(item -> new MoneyMovementEntity(item.toDomain()))
+                .toList();
+        movementRepository.saveAll(newMovements);
+
         return new SubscriptionBackupImportResponse(
                 newSubscriptions.size(),
-                request.subscriptions().size() - newSubscriptions.size()
+                request.subscriptions().size() - newSubscriptions.size(),
+                newMovements.size(),
+                backupMovements.size() - newMovements.size()
         );
     }
 

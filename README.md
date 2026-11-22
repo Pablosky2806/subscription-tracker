@@ -11,7 +11,7 @@ Aplicación self-hosted para registrar suscripciones y consultar cuánto cuestan
 - Mostrar gasto agrupado por categoría.
 - Registrar gastos e ingresos manualmente con fecha, concepto, importe y categoría.
 - Importar gastos e ingresos desde CSV con vista previa y detección de posibles duplicados; el archivo se procesa localmente en el navegador.
-- Exportar e importar copias JSON; la importación conserva los datos existentes y omite suscripciones con el mismo identificador.
+- Exportar e importar copias JSON de suscripciones y movimientos; la restauración conserva los datos existentes y omite registros con el mismo identificador. También admite copias antiguas de la versión 1, que solo contenían suscripciones.
 
 ## Arquitectura acordada
 

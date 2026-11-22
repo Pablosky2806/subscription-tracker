@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { archiveSubscription, createSubscription, getDashboardData, getUpcomingCharges, importSubscriptionBackup, restoreSubscription, updateSubscription } from './api'
-import type { Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
+import { archiveSubscription, createSubscription, getDashboardData, getMoneyMovements, getUpcomingCharges, importSubscriptionBackup, restoreSubscription, updateSubscription } from './api'
+import type { MoneyMovement, Subscription, SubscriptionInput, Summary, UpcomingCharge } from './types'
 import SubscriptionForm from './SubscriptionForm'
 import MovementsPanel from './MovementsPanel'
 import { isoDateToDmy } from './dateUtils'
@@ -27,12 +27,13 @@ function formatBillingFrequency(subscription: Pick<Subscription, 'billingPeriod'
   return subscription.billingPeriod === 'YEARLY' ? 'Anual' : 'Mensual'
 }
 
-function downloadBackup(subscriptions: Subscription[]) {
+function downloadBackup(subscriptions: Subscription[], movements: MoneyMovement[]) {
   const backup = {
     format: 'subscription-tracker-backup',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     subscriptions,
+    movements,
   }
   const file = new Blob([`${JSON.stringify(backup, null, 2)}\n`], { type: 'application/json' })
   const url = URL.createObjectURL(file)
@@ -236,6 +237,7 @@ function App() {
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [backupBusy, setBackupBusy] = useState(false)
+  const [movementRefreshKey, setMovementRefreshKey] = useState(0)
   const backupInputRef = useRef<HTMLInputElement>(null)
   const [subscriptionQuery, setSubscriptionQuery] = useState('')
   const [subscriptionStatus, setSubscriptionStatus] = useState<'ALL' | 'ACTIVE' | 'ARCHIVED'>('ALL')
@@ -283,7 +285,7 @@ function App() {
     }
 
     const shouldImport = window.confirm(
-      'La copia añadirá las suscripciones que todavía no existan. Las que ya tienes se conservarán sin cambios. ¿Continuar?',
+      'La copia añadirá las suscripciones y movimientos que todavía no existan. Los datos existentes se conservarán sin cambios. ¿Continuar?',
     )
     if (!shouldImport) return
 
@@ -293,9 +295,25 @@ function App() {
     try {
       const result = await importSubscriptionBackup(backup)
       await refreshDashboard()
-      setNotice(`Copia restaurada: ${result.imported} añadidas y ${result.skippedExisting} ya existentes conservadas.`)
+      setMovementRefreshKey((key) => key + 1)
+      setNotice(`Copia restaurada: ${result.imported} suscripciones y ${result.importedMovements} movimientos añadidos; se conservaron ${result.skippedExisting} suscripciones y ${result.skippedExistingMovements} movimientos existentes.`)
     } catch (importError: unknown) {
       setError(importError instanceof Error ? importError.message : 'No se pudo restaurar la copia.')
+    } finally {
+      setBackupBusy(false)
+    }
+  }
+
+  async function handleBackupExport() {
+    setBackupBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const movements = await getMoneyMovements(new AbortController().signal)
+      downloadBackup(subscriptions, movements)
+      setNotice(`Copia descargada con ${subscriptions.length} suscripciones y ${movements.length} movimientos.`)
+    } catch (exportError: unknown) {
+      setError(exportError instanceof Error ? exportError.message : 'No se pudo crear la copia de seguridad.')
     } finally {
       setBackupBusy(false)
     }
@@ -435,12 +453,12 @@ function App() {
                 <button
                   className="secondary-button"
                   type="button"
-                  disabled={backupBusy}
+                  disabled={backupBusy || loading}
                   onClick={() => backupInputRef.current?.click()}
                 >
                   {backupBusy ? 'Restaurando…' : 'Restaurar copia'}
                 </button>
-                <button className="secondary-button" type="button" onClick={() => downloadBackup(subscriptions)}>
+                <button className="secondary-button" type="button" disabled={backupBusy || loading} onClick={handleBackupExport}>
                   Exportar copia
                 </button>
                 <button className="primary-button" type="button" onClick={() => {
@@ -598,7 +616,7 @@ function App() {
           )}
         </section>
 
-        <MovementsPanel />
+        <MovementsPanel refreshKey={movementRefreshKey} />
 
         <footer className="footer-note">Tus datos permanecen en tu propio servidor.</footer>
       </main>

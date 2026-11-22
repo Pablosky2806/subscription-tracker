@@ -111,7 +111,7 @@ function CategoryBars({
   )
 }
 
-function MovementsPanel() {
+function MovementsPanel({ refreshKey = 0 }: { refreshKey?: number }) {
   const [movements, setMovements] = useState<MoneyMovement[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -139,7 +139,7 @@ function MovementsPanel() {
       })
 
     return () => controller.abort()
-  }, [])
+  }, [refreshKey])
 
   async function handleSave(input: MoneyMovementInput) {
     const created = await createMoneyMovement(input)
